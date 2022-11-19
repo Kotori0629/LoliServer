@@ -1,0 +1,33 @@
+--- a/net/minecraft/server/level/WorldGenRegion.java
++++ b/net/minecraft/server/level/WorldGenRegion.java
+@@ -5,6 +_,7 @@
+ import java.util.List;
+ import java.util.Locale;
+ import java.util.concurrent.atomic.AtomicLong;
++import java.util.concurrent.atomic.AtomicReference;
+ import java.util.function.Predicate;
+ import java.util.function.Supplier;
+ import javax.annotation.Nullable;
+@@ -53,6 +_,7 @@
+ import net.minecraft.world.phys.Vec3;
+ import net.minecraft.world.ticks.LevelTickAccess;
+ import net.minecraft.world.ticks.WorldGenTickAccess;
++import org.bukkit.event.entity.CreatureSpawnEvent;
+ import org.slf4j.Logger;
+ 
+ public class WorldGenRegion implements WorldGenLevel {
+@@ -294,6 +_,14 @@
+    private void m_9591_(BlockPos p_9592_) {
+       this.m_46865_(p_9592_).m_8113_(p_9592_);
+    }
++
++   // LoliServer start - TODO
++   public AtomicReference<CreatureSpawnEvent.SpawnReason> addFreshEntitySpawnReason = new AtomicReference<>(CreatureSpawnEvent.SpawnReason.DEFAULT);
++   public boolean addFreshEntity(Entity entity, CreatureSpawnEvent.SpawnReason reason) {
++      this.addFreshEntitySpawnReason.set(reason);
++      return m_7967_(entity);
++   }
++   // LoliServer end
+ 
+    public boolean m_7967_(Entity p_9580_) {
+       int i = SectionPos.m_123171_(p_9580_.m_146903_());

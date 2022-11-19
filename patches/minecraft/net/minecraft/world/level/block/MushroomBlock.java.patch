@@ -1,0 +1,47 @@
+--- a/net/minecraft/world/level/block/MushroomBlock.java
++++ b/net/minecraft/world/level/block/MushroomBlock.java
+@@ -14,6 +_,7 @@
+ import net.minecraft.world.level.levelgen.feature.ConfiguredFeature;
+ import net.minecraft.world.phys.shapes.CollisionContext;
+ import net.minecraft.world.phys.shapes.VoxelShape;
++import org.bukkit.TreeType;
+ 
+ public class MushroomBlock extends BushBlock implements BonemealableBlock {
+    protected static final float f_153980_ = 3.0F;
+@@ -30,7 +_,7 @@
+    }
+ 
+    public void m_213898_(BlockState p_221784_, ServerLevel p_221785_, BlockPos p_221786_, RandomSource p_221787_) {
+-      if (p_221787_.m_188503_(25) == 0) {
++      if (p_221787_.m_188503_(Math.max(1, (int) (100.0F / p_221785_.spigotConfig.mushroomModifier) * 25)) == 0) { // Spigot
+          int i = 5;
+          int j = 4;
+ 
+@@ -54,7 +_,7 @@
+          }
+ 
+          if (p_221785_.m_46859_(blockpos1) && p_221784_.m_60710_(p_221785_, blockpos1)) {
+-            p_221785_.m_7731_(blockpos1, p_221784_, 2);
++            org.bukkit.craftbukkit.v1_19_R1.event.CraftEventFactory.handleBlockSpreadEvent(p_221785_, p_221786_, blockpos1, p_221784_, 2); // CraftBukkit
+          }
+       }
+ 
+@@ -70,13 +_,16 @@
+       if (blockstate.m_204336_(BlockTags.f_13057_)) {
+          return true;
+       } else {
+-         return p_54881_.m_45524_(p_54882_, 0) < 13 && this.m_6266_(blockstate, p_54881_, blockpos);
++         return p_54881_.m_45524_(p_54882_, 0) < 13 && blockstate.canSustainPlant(p_54881_, blockpos, net.minecraft.core.Direction.UP, this);
+       }
+    }
+ 
+    public boolean m_221773_(ServerLevel p_221774_, BlockPos p_221775_, BlockState p_221776_, RandomSource p_221777_) {
++      net.minecraftforge.event.level.SaplingGrowTreeEvent event = net.minecraftforge.event.ForgeEventFactory.blockGrowFeature(p_221774_, p_221777_, p_221775_, this.f_153981_.get());
++      if (event.getResult().equals(net.minecraftforge.eventbus.api.Event.Result.DENY)) return false;
+       p_221774_.m_7471_(p_221775_, false);
+-      if (this.f_153981_.get().m_203334_().m_224953_(p_221774_, p_221774_.m_7726_().m_8481_(), p_221777_, p_221775_)) {
++      SaplingBlock.treeType = TreeType.BROWN_MUSHROOM; // CraftBukkit
++      if (event.getFeature().m_203334_().m_224953_(p_221774_, p_221774_.m_7726_().m_8481_(), p_221777_, p_221775_)) {
+          return true;
+       } else {
+          p_221774_.m_7731_(p_221775_, p_221776_, 3);

@@ -1,0 +1,108 @@
+--- a/net/minecraft/world/level/storage/LevelStorageSource.java
++++ b/net/minecraft/world/level/storage/LevelStorageSource.java
+@@ -55,6 +_,7 @@
+ import net.minecraft.world.level.Level;
+ import net.minecraft.world.level.LevelSettings;
+ import net.minecraft.world.level.dimension.DimensionType;
++import net.minecraft.world.level.dimension.LevelStem;
+ import net.minecraft.world.level.levelgen.WorldGenSettings;
+ import net.minecraft.world.level.levelgen.presets.WorldPresets;
+ import org.slf4j.Logger;
+@@ -96,6 +_,13 @@
+       }
+ 
+       Dynamic<T> dynamic1 = p_78206_.update(References.f_16795_, dynamic, p_78207_, SharedConstants.m_183709_().getWorldVersion());
++      // The above line is modified (via the patch in V2832), such that the data fixer upper will retain dimensions that don't exist in the schema, in the dynamic.
++      // When we parse the WorldGenSettings below, in vanilla, this uses the same call paths that can cause things to register (such as dimension types).
++      // However, since at this point all resource data will have been loaded, anything that *would* register now is going to error later, because it'll create a Holder<> reference, that is not bound to anything. This unbound reference will then throw an error when the registries are frozen.
++      // So, we freeze the registries before this call to parse(). This prevents them from leaking any new unbound holders into the registry.
++      // Attempting to register to a frozen registry throws an exception, which we resolve via a patch in RegistryLoader, causing it to return DataResult.error() instead, and prevent the faulty dimension from registering without aborting the parsing of the WorldGenSettings
++      // Finally, the resultOrPartial() promotes only the dimensions which successfully parsed, and the LenientUnboundedMapCodec which is patched into the WorldGenSettings codec ensures that *only* the invalid dimensions will fail to parse (see MC-197860), and not discard other dimensions as well.
++      if (p_78205_.getOps() instanceof net.minecraft.resources.RegistryOps<T> ops) ops.f_206806_.m_203610_().forEach(e -> e.f_206234_().m_203521_());
+       DataResult<WorldGenSettings> dataresult = WorldGenSettings.f_64600_.parse(dynamic1);
+       return Pair.of(dataresult.resultOrPartial(Util.m_137489_("WorldGenSettings: ", f_78191_::error)).orElseGet(() -> {
+          RegistryAccess registryaccess = RegistryAccess.m_206154_(dynamic1);
+@@ -282,8 +_,25 @@
+    }
+ 
+    public LevelStorageSource.LevelStorageAccess m_78260_(String p_78261_) throws IOException {
+-      return new LevelStorageSource.LevelStorageAccess(p_78261_);
+-   }
++      return new LevelStorageSource.LevelStorageAccess(p_78261_, null);
++   }
++
++   public LevelStorageSource.LevelStorageAccess createAccess(String name, ResourceKey<LevelStem> actualDimension) throws IOException {
++      return new LevelStorageSource.LevelStorageAccess(name, actualDimension);
++   }
++
++   public static Path getStorageFolder(Path path, ResourceKey<LevelStem> dimensionType) {
++      if (dimensionType == LevelStem.f_63971_) {
++         return path;
++      } else if (dimensionType == LevelStem.f_63972_) {
++         return path.resolve("DIM-1");
++      } else if (dimensionType == LevelStem.f_63973_) {
++         return path.resolve("DIM1");
++      } else {
++         return path.resolve("dimensions").resolve(dimensionType.m_135782_().m_135827_()).resolve(dimensionType.m_135782_().m_135815_());
++      }
++   }
++   // CraftBukkit end
+ 
+    public static record LevelCandidates(List<LevelStorageSource.LevelDirectory> f_230840_) implements Iterable<LevelStorageSource.LevelDirectory> {
+       public boolean m_230843_() {
+@@ -327,11 +_,13 @@
+ 
+    public class LevelStorageAccess implements AutoCloseable {
+       final DirectoryLock f_78270_;
+-      final LevelStorageSource.LevelDirectory f_230867_;
++      public final LevelStorageSource.LevelDirectory f_230867_;
+       private final String f_78272_;
+       private final Map<LevelResource, Path> f_78273_ = Maps.newHashMap();
++      public final ResourceKey<LevelStem> dimensionType;
+ 
+-      public LevelStorageAccess(String p_78276_) throws IOException {
++      public LevelStorageAccess(String p_78276_, ResourceKey<LevelStem> dimensionType) throws IOException {
++         this.dimensionType = dimensionType;
+          this.f_78272_ = p_78276_;
+          this.f_230867_ = new LevelStorageSource.LevelDirectory(LevelStorageSource.this.f_78194_.resolve(p_78276_));
+          this.f_78270_ = DirectoryLock.m_13640_(this.f_230867_.f_230850_());
+@@ -372,6 +_,19 @@
+          return LevelStorageSource.this.m_230817_(this.f_230867_, LevelStorageSource.m_211737_(p_211748_, p_211749_, p_211750_));
+       }
+ 
++      public void readAdditionalLevelSaveData() {
++         m_78313_();
++         LevelStorageSource.this.m_230817_(this.f_230867_, (path, dataFixer) -> {
++            try {
++               CompoundTag compoundTag = NbtIo.m_128937_(path.toFile());
++               net.minecraftforge.common.ForgeHooks.readAdditionalLevelSaveData(compoundTag, this.f_230867_);
++            } catch (Exception e) {
++                f_78191_.error("Exception reading {}", path, e);
++            }
++            return ""; // Return non-null to prevent level.dat-old inject
++         });
++      }
++
+       @Nullable
+       public DataPackConfig m_78309_() {
+          this.m_78313_();
+@@ -388,6 +_,8 @@
+          CompoundTag compoundtag1 = new CompoundTag();
+          compoundtag1.m_128365_("Data", compoundtag);
+ 
++         net.minecraftforge.common.ForgeHooks.writeAdditionalLevelSaveData(p_78292_, compoundtag1);
++
+          try {
+             File file2 = File.createTempFile("level", ".dat", file1);
+             NbtIo.m_128944_(compoundtag1, file2);
+@@ -402,6 +_,10 @@
+ 
+       public Optional<Path> m_182514_() {
+          return !this.f_78270_.m_13639_() ? Optional.empty() : Optional.of(this.f_230867_.m_230860_());
++      }
++
++      public Path getWorldDir() {
++         return f_78194_;
+       }
+ 
+       public void m_78311_() throws IOException {

@@ -1,0 +1,34 @@
+--- a/net/minecraft/world/level/block/JukeboxBlock.java
++++ b/net/minecraft/world/level/block/JukeboxBlock.java
+@@ -48,7 +_,6 @@
+       if (p_54281_.m_61143_(f_54254_)) {
+          this.m_54260_(p_54282_, p_54283_);
+          p_54281_ = p_54281_.m_61124_(f_54254_, Boolean.valueOf(false));
+-         p_54282_.m_220407_(GameEvent.f_238649_, p_54283_, GameEvent.Context.m_223722_(p_54281_));
+          p_54282_.m_7731_(p_54283_, p_54281_, 2);
+          p_54282_.m_220407_(GameEvent.f_157792_, p_54283_, GameEvent.Context.m_223719_(p_54284_, p_54281_));
+          return InteractionResult.m_19078_(p_54282_.f_46443_);
+@@ -60,7 +_,13 @@
+    public void m_238345_(@Nullable Entity p_238346_, LevelAccessor p_238347_, BlockPos p_238348_, BlockState p_238349_, ItemStack p_238350_) {
+       BlockEntity blockentity = p_238347_.m_7702_(p_238348_);
+       if (blockentity instanceof JukeboxBlockEntity jukeboxblockentity) {
+-         jukeboxblockentity.m_59517_(p_238350_.m_41777_());
++         // CraftBukkit start - There can only be one
++         p_238350_ = p_238350_.m_41777_();
++         if (!p_238350_.m_41619_()) {
++            p_238350_.m_41764_(1);
++         }
++         jukeboxblockentity.m_59517_(p_238350_);
++         // CraftBukkit end
+          jukeboxblockentity.m_239936_();
+          p_238347_.m_7731_(p_238348_, p_238349_.m_61124_(f_54254_, Boolean.valueOf(true)), 2);
+          p_238347_.m_220407_(GameEvent.f_157792_, p_238348_, GameEvent.Context.m_223719_(p_238346_, p_238349_));
+@@ -68,7 +_,7 @@
+ 
+    }
+ 
+-   private void m_54260_(Level p_54261_, BlockPos p_54262_) {
++   public void m_54260_(Level p_54261_, BlockPos p_54262_) {
+       if (!p_54261_.f_46443_) {
+          BlockEntity blockentity = p_54261_.m_7702_(p_54262_);
+          if (blockentity instanceof JukeboxBlockEntity) {

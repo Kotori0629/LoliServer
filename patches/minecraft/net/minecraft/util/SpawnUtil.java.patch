@@ -1,0 +1,133 @@
+--- a/net/minecraft/util/SpawnUtil.java
++++ b/net/minecraft/util/SpawnUtil.java
+@@ -1,6 +_,8 @@
+ package net.minecraft.util;
+ 
+ import java.util.Optional;
++import java.util.concurrent.atomic.AtomicReference;
++
+ import net.minecraft.core.BlockPos;
+ import net.minecraft.core.Direction;
+ import net.minecraft.nbt.CompoundTag;
+@@ -12,58 +_,69 @@
+ import net.minecraft.world.entity.player.Player;
+ import net.minecraft.world.level.block.Block;
+ import net.minecraft.world.level.block.state.BlockState;
++import org.bukkit.event.entity.CreatureSpawnEvent;
+ 
+ public class SpawnUtil {
+-   public static <T extends Mob> Optional<T> m_216403_(EntityType<T> p_216404_, MobSpawnType p_216405_, ServerLevel p_216406_, BlockPos p_216407_, int p_216408_, int p_216409_, int p_216410_, SpawnUtil.Strategy p_216411_) {
+-      BlockPos.MutableBlockPos blockpos$mutableblockpos = p_216407_.m_122032_();
+-
+-      for(int i = 0; i < p_216408_; ++i) {
+-         int j = Mth.m_216287_(p_216406_.f_46441_, -p_216409_, p_216409_);
+-         int k = Mth.m_216287_(p_216406_.f_46441_, -p_216409_, p_216409_);
+-         blockpos$mutableblockpos.m_122154_(p_216407_, j, p_216410_, k);
+-         if (p_216406_.m_6857_().m_61937_(blockpos$mutableblockpos) && m_216398_(p_216406_, p_216410_, blockpos$mutableblockpos, p_216411_)) {
+-            T t = p_216404_.m_20655_(p_216406_, (CompoundTag)null, (Component)null, (Player)null, blockpos$mutableblockpos, p_216405_, false, false);
+-            if (t != null) {
+-               if (t.m_5545_(p_216406_, p_216405_) && t.m_6914_(p_216406_)) {
+-                  p_216406_.m_47205_(t);
+-                  return Optional.of(t);
+-               }
+-
+-               t.m_146870_();
+-            }
+-         }
+-      }
+-
+-      return Optional.empty();
+-   }
+-
+-   private static boolean m_216398_(ServerLevel p_216399_, int p_216400_, BlockPos.MutableBlockPos p_216401_, SpawnUtil.Strategy p_216402_) {
+-      BlockPos.MutableBlockPos blockpos$mutableblockpos = (new BlockPos.MutableBlockPos()).m_122190_(p_216401_);
+-      BlockState blockstate = p_216399_.m_8055_(blockpos$mutableblockpos);
+-
+-      for(int i = p_216400_; i >= -p_216400_; --i) {
+-         p_216401_.m_122173_(Direction.DOWN);
+-         blockpos$mutableblockpos.m_122159_(p_216401_, Direction.UP);
+-         BlockState blockstate1 = p_216399_.m_8055_(p_216401_);
+-         if (p_216402_.m_216427_(p_216399_, p_216401_, blockstate1, blockpos$mutableblockpos, blockstate)) {
+-            p_216401_.m_122173_(Direction.UP);
+-            return true;
+-         }
+-
+-         blockstate = blockstate1;
+-      }
+-
+-      return false;
+-   }
+-
+-   public interface Strategy {
+-      SpawnUtil.Strategy f_216412_ = (p_216422_, p_216423_, p_216424_, p_216425_, p_216426_) -> {
+-         return (p_216426_.m_60795_() || p_216426_.m_60767_().m_76332_()) && p_216424_.m_60767_().m_76337_();
+-      };
+-      SpawnUtil.Strategy f_216413_ = (p_216416_, p_216417_, p_216418_, p_216419_, p_216420_) -> {
+-         return p_216420_.m_60812_(p_216416_, p_216419_).m_83281_() && Block.m_49918_(p_216418_.m_60812_(p_216416_, p_216417_), Direction.UP);
+-      };
+-
+-      boolean m_216427_(ServerLevel p_216428_, BlockPos p_216429_, BlockState p_216430_, BlockPos p_216431_, BlockState p_216432_);
+-   }
++
++    static AtomicReference<CreatureSpawnEvent.SpawnReason> lolimoe$spawnReason = new AtomicReference<>(null);
++
++    public static <T extends Mob> Optional<T> trySpawnMob(EntityType<T> p_216404_, MobSpawnType p_216405_, ServerLevel p_216406_, BlockPos p_216407_, int p_216408_, int p_216409_, int p_216410_, SpawnUtil.Strategy p_216411_, CreatureSpawnEvent.SpawnReason reason) {
++        lolimoe$spawnReason.set(reason);
++        return m_216403_(p_216404_, p_216405_, p_216406_, p_216407_, p_216408_, p_216409_, p_216410_, p_216411_);
++    }
++
++    public static <T extends Mob> Optional<T> m_216403_(EntityType<T> p_216404_, MobSpawnType p_216405_, ServerLevel p_216406_, BlockPos p_216407_, int p_216408_, int p_216409_, int p_216410_, SpawnUtil.Strategy p_216411_) {
++        BlockPos.MutableBlockPos blockpos$mutableblockpos = p_216407_.m_122032_();
++
++        for (int i = 0; i < p_216408_; ++i) {
++            int j = Mth.m_216287_(p_216406_.f_46441_, -p_216409_, p_216409_);
++            int k = Mth.m_216287_(p_216406_.f_46441_, -p_216409_, p_216409_);
++            blockpos$mutableblockpos.m_122154_(p_216407_, j, p_216410_, k);
++            if (p_216406_.m_6857_().m_61937_(blockpos$mutableblockpos) && m_216398_(p_216406_, p_216410_, blockpos$mutableblockpos, p_216411_)) {
++                T t = p_216404_.m_20655_(p_216406_, (CompoundTag) null, (Component) null, (Player) null, blockpos$mutableblockpos, p_216405_, false, false);
++                if (t != null) {
++                    if (t.m_5545_(p_216406_, p_216405_) && t.m_6914_(p_216406_)) {
++                        CreatureSpawnEvent.SpawnReason reason = lolimoe$spawnReason.get() != null ? lolimoe$spawnReason.get() : CreatureSpawnEvent.SpawnReason.DEFAULT;
++                        p_216406_.addFreshEntityWithPassengers(t, reason);
++                        lolimoe$spawnReason.set(null);
++                        return Optional.of(t);
++                    }
++
++                    t.m_146870_();
++                }
++            }
++        }
++
++        return Optional.empty();
++    }
++
++    private static boolean m_216398_(ServerLevel p_216399_, int p_216400_, BlockPos.MutableBlockPos p_216401_, SpawnUtil.Strategy p_216402_) {
++        BlockPos.MutableBlockPos blockpos$mutableblockpos = (new BlockPos.MutableBlockPos()).m_122190_(p_216401_);
++        BlockState blockstate = p_216399_.m_8055_(blockpos$mutableblockpos);
++
++        for (int i = p_216400_; i >= -p_216400_; --i) {
++            p_216401_.m_122173_(Direction.DOWN);
++            blockpos$mutableblockpos.m_122159_(p_216401_, Direction.UP);
++            BlockState blockstate1 = p_216399_.m_8055_(p_216401_);
++            if (p_216402_.m_216427_(p_216399_, p_216401_, blockstate1, blockpos$mutableblockpos, blockstate)) {
++                p_216401_.m_122173_(Direction.UP);
++                return true;
++            }
++
++            blockstate = blockstate1;
++        }
++
++        return false;
++    }
++
++    public interface Strategy {
++        SpawnUtil.Strategy f_216412_ = (p_216422_, p_216423_, p_216424_, p_216425_, p_216426_) -> {
++            return (p_216426_.m_60795_() || p_216426_.m_60767_().m_76332_()) && p_216424_.m_60767_().m_76337_();
++        };
++        SpawnUtil.Strategy f_216413_ = (p_216416_, p_216417_, p_216418_, p_216419_, p_216420_) -> {
++            return p_216420_.m_60812_(p_216416_, p_216419_).m_83281_() && Block.m_49918_(p_216418_.m_60812_(p_216416_, p_216417_), Direction.UP);
++        };
++
++        boolean m_216427_(ServerLevel p_216428_, BlockPos p_216429_, BlockState p_216430_, BlockPos p_216431_, BlockState p_216432_);
++    }
+ }

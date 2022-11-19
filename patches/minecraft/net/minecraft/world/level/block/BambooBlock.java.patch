@@ -1,0 +1,94 @@
+--- a/net/minecraft/world/level/block/BambooBlock.java
++++ b/net/minecraft/world/level/block/BambooBlock.java
+@@ -26,7 +_,7 @@
+ import net.minecraft.world.phys.shapes.CollisionContext;
+ import net.minecraft.world.phys.shapes.VoxelShape;
+ 
+-public class BambooBlock extends Block implements BonemealableBlock {
++public class BambooBlock extends Block implements BonemealableBlock, net.minecraftforge.common.IPlantable  {
+    protected static final float f_152092_ = 3.0F;
+    protected static final float f_152093_ = 5.0F;
+    protected static final float f_152094_ = 1.5F;
+@@ -110,10 +_,11 @@
+ 
+    public void m_213898_(BlockState p_220738_, ServerLevel p_220739_, BlockPos p_220740_, RandomSource p_220741_) {
+       if (p_220738_.m_61143_(f_48871_) == 0) {
+-         if (p_220741_.m_188503_(3) == 0 && p_220739_.m_46859_(p_220740_.m_7494_()) && p_220739_.m_45524_(p_220740_.m_7494_(), 0) >= 9) {
++         if (p_220739_.m_46859_(p_220740_.m_7494_()) && p_220739_.m_45524_(p_220740_.m_7494_(), 0) >= 9) {
+             int i = this.m_48932_(p_220739_, p_220740_) + 1;
+-            if (i < 16) {
++            if (i < 16 && net.minecraftforge.common.ForgeHooks.onCropsGrowPre(p_220739_, p_220740_, p_220738_, p_220741_.m_188503_(Math.max(1, (int) (100.0F / p_220739_.spigotConfig.bambooModifier) * 3)) == 0)) {
+                this.m_220731_(p_220738_, p_220739_, p_220740_, p_220741_, i);
++               net.minecraftforge.common.ForgeHooks.onCropsGrowPost(p_220739_, p_220740_, p_220738_);
+             }
+          }
+ 
+@@ -155,7 +_,7 @@
+       for(int i1 = 0; i1 < l; ++i1) {
+          BlockPos blockpos = p_220719_.m_6630_(i);
+          BlockState blockstate = p_220717_.m_8055_(blockpos);
+-         if (k >= 16 || blockstate.m_61143_(f_48871_) == 1 || !p_220717_.m_46859_(blockpos.m_7494_())) {
++         if (k >= 16 || !blockstate.m_60713_(Blocks.f_50571_) || blockstate.m_61143_(f_48871_) == 1 || !p_220717_.m_46859_(blockpos.m_7494_())) { // CraftBukkit - If the BlockSpreadEvent was cancelled, we have no bamboo here
+             return;
+          }
+ 
+@@ -167,7 +_,7 @@
+    }
+ 
+    public float m_5880_(BlockState p_48901_, Player p_48902_, BlockGetter p_48903_, BlockPos p_48904_) {
+-      return p_48902_.m_21205_().m_41720_() instanceof SwordItem ? 1.0F : super.m_5880_(p_48901_, p_48902_, p_48903_, p_48904_);
++      return p_48902_.m_21205_().canPerformAction(net.minecraftforge.common.ToolActions.SWORD_DIG) ? 1.0F : super.m_5880_(p_48901_, p_48902_, p_48903_, p_48904_);
+    }
+ 
+    protected void m_220731_(BlockState p_220732_, Level p_220733_, BlockPos p_220734_, RandomSource p_220735_, int p_220736_) {
+@@ -175,13 +_,19 @@
+       BlockPos blockpos = p_220734_.m_6625_(2);
+       BlockState blockstate1 = p_220733_.m_8055_(blockpos);
+       BambooLeaves bambooleaves = BambooLeaves.NONE;
++      boolean shouldUpdateOthers = false; // CraftBukkit
+       if (p_220736_ >= 1) {
+          if (blockstate.m_60713_(Blocks.f_50571_) && blockstate.m_61143_(f_48870_) != BambooLeaves.NONE) {
+             if (blockstate.m_60713_(Blocks.f_50571_) && blockstate.m_61143_(f_48870_) != BambooLeaves.NONE) {
+                bambooleaves = BambooLeaves.LARGE;
+                if (blockstate1.m_60713_(Blocks.f_50571_)) {
+-                  p_220733_.m_7731_(p_220734_.m_7495_(), blockstate.m_61124_(f_48870_, BambooLeaves.SMALL), 3);
+-                  p_220733_.m_7731_(blockpos, blockstate1.m_61124_(f_48870_, BambooLeaves.NONE), 3);
++                  /*
++                  // CraftBukkit start - moved down
++                  p_220733_.setBlock(p_220734_.below(), blockstate.setValue(LEAVES, BambooLeaves.SMALL), 3);
++                  p_220733_.setBlock(blockpos, blockstate1.setValue(LEAVES, BambooLeaves.NONE), 3);
++                   */
++                  shouldUpdateOthers = true;
++                  // CraftBukkit end
+                }
+             }
+          } else {
+@@ -191,7 +_,14 @@
+ 
+       int i = p_220732_.m_61143_(f_48869_) != 1 && !blockstate1.m_60713_(Blocks.f_50571_) ? 0 : 1;
+       int j = (p_220736_ < 11 || !(p_220735_.m_188501_() < 0.25F)) && p_220736_ != 15 ? 0 : 1;
+-      p_220733_.m_7731_(p_220734_.m_7494_(), this.m_49966_().m_61124_(f_48869_, Integer.valueOf(i)).m_61124_(f_48870_, bambooleaves).m_61124_(f_48871_, Integer.valueOf(j)), 3);
++      // CraftBukkit start
++      if (org.bukkit.craftbukkit.v1_19_R1.event.CraftEventFactory.handleBlockSpreadEvent(p_220733_, p_220734_, p_220734_.m_7494_(), ((this.m_49966_().m_61124_(f_48869_, i)).m_61124_(f_48870_, bambooleaves)).m_61124_(f_48871_, j), 3)) {
++         if (shouldUpdateOthers) {
++            p_220733_.m_7731_(p_220734_.m_7495_(), blockstate.m_61124_(f_48870_, BambooLeaves.SMALL), 3);
++            p_220733_.m_7731_(blockpos, blockstate1.m_61124_(f_48870_, BambooLeaves.NONE), 3);
++         }
++      }
++      // CraftBukkit end
+    }
+ 
+    protected int m_48882_(BlockGetter p_48883_, BlockPos p_48884_) {
+@@ -208,5 +_,12 @@
+       }
+ 
+       return i;
++   }
++
++   @Override
++   public BlockState getPlant(BlockGetter world, BlockPos pos) {
++      BlockState state = world.m_8055_(pos);
++      if (state.m_60734_() != this) return m_49966_();
++      return state;
+    }
+ }

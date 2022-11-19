@@ -1,0 +1,41 @@
+--- a/net/minecraft/world/level/block/SculkVeinBlock.java
++++ b/net/minecraft/world/level/block/SculkVeinBlock.java
+@@ -1,6 +_,8 @@
+ package net.minecraft.world.level.block;
+ 
+ import java.util.Collection;
++import java.util.concurrent.atomic.AtomicReference;
++
+ import net.minecraft.core.BlockPos;
+ import net.minecraft.core.Direction;
+ import net.minecraft.sounds.SoundEvents;
+@@ -93,6 +_,13 @@
+       }
+    }
+ 
++   // LoliServer start
++   private AtomicReference<BlockPos> lolimoe$attemptPlaceSourcePos = new AtomicReference<>(BlockPos.f_121853_);
++   private boolean attemptPlaceSculk(SculkSpreader p_222376_, LevelAccessor p_222377_, BlockPos p_222378_, RandomSource p_222379_, BlockPos source) {
++      lolimoe$attemptPlaceSourcePos.set(source);
++      return m_222375_(p_222376_, p_222377_, p_222378_, p_222379_);
++   }
++
+    private boolean m_222375_(SculkSpreader p_222376_, LevelAccessor p_222377_, BlockPos p_222378_, RandomSource p_222379_) {
+       BlockState blockstate = p_222377_.m_8055_(p_222378_);
+       TagKey<Block> tagkey = p_222376_.m_222277_();
+@@ -103,7 +_,14 @@
+             BlockState blockstate1 = p_222377_.m_8055_(blockpos);
+             if (blockstate1.m_204336_(tagkey)) {
+                BlockState blockstate2 = Blocks.f_220855_.m_49966_();
+-               p_222377_.m_7731_(blockpos, blockstate2, 3);
++
++               // CraftBukkit start - Call BlockSpreadEvent
++               BlockPos sourceBlock = lolimoe$attemptPlaceSourcePos.getAndSet(BlockPos.f_121853_);
++               if (!org.bukkit.craftbukkit.v1_19_R1.event.CraftEventFactory.handleBlockSpreadEvent(p_222377_, sourceBlock, blockpos, blockstate2, 3)) {
++                  return false;
++               }
++               // CraftBukkit end
++
+                Block.m_49897_(blockstate1, blockstate2, p_222377_, blockpos);
+                p_222377_.m_5594_((Player)null, blockpos, SoundEvents.f_215753_, SoundSource.BLOCKS, 1.0F, 1.0F);
+                this.f_222349_.m_221657_(blockstate2, p_222377_, blockpos, p_222376_.m_222282_());

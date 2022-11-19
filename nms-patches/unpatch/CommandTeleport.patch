@@ -1,0 +1,46 @@
+--- a/net/minecraft/server/commands/CommandTeleport.java
++++ b/net/minecraft/server/commands/CommandTeleport.java
+@@ -35,6 +35,12 @@
+ import net.minecraft.world.phys.Vec2F;
+ import net.minecraft.world.phys.Vec3D;
+ 
++// CraftBukkit start
++import org.bukkit.Location;
++import org.bukkit.craftbukkit.CraftWorld;
++import org.bukkit.event.entity.EntityTeleportEvent;
++// CraftBukkit end
++
+ public class CommandTeleport {
+ 
+     private static final SimpleCommandExceptionType INVALID_POSITION = new SimpleCommandExceptionType(IChatBaseComponent.translatable("commands.teleport.invalidPosition"));
+@@ -159,14 +165,29 @@
+                 }
+ 
+                 if (worldserver == entity.level) {
+-                    ((EntityPlayer) entity).connection.teleport(d0, d1, d2, f2, f3, set);
++                    ((EntityPlayer) entity).connection.teleport(d0, d1, d2, f2, f3, set, org.bukkit.event.player.PlayerTeleportEvent.TeleportCause.COMMAND); // CraftBukkit
+                 } else {
+-                    ((EntityPlayer) entity).teleportTo(worldserver, d0, d1, d2, f2, f3);
++                    ((EntityPlayer) entity).teleportTo(worldserver, d0, d1, d2, f2, f3, org.bukkit.event.player.PlayerTeleportEvent.TeleportCause.COMMAND); // CraftBukkit
+                 }
+ 
+                 entity.setYHeadRot(f2);
+             } else {
+                 float f4 = MathHelper.clamp(f3, -90.0F, 90.0F);
+
++               // CraftBukkit start - Teleport event
++                Location to = new Location(p_139017_.getWorld(), p_139018_, p_139019_, p_139020_, f, f2);
++                EntityTeleportEvent cbEvent = new EntityTeleportEvent(p_139016_.getBukkitEntity(), p_139016_.getBukkitEntity().getLocation(), to);
++                p_139017_.getCraftServer().getPluginManager().callEvent(cbEvent);
++                if (cbEvent.isCancelled()) {
++                    return;
++                }
++                p_139018_ = to.getX();
++                p_139019_ = to.getY();
++                p_139020_ = to.getZ();
++                f = to.getYaw();
++                f2 = to.getPitch();
++                p_139017_ = ((CraftWorld) to.getWorld()).getHandle();
++                // CraftBukkit end
+                if (worldserver == entity.level) {
+                    entity.moveTo(d0, d1, d2, f2, f4);

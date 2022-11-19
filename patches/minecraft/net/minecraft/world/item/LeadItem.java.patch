@@ -1,0 +1,81 @@
+--- a/net/minecraft/world/item/LeadItem.java
++++ b/net/minecraft/world/item/LeadItem.java
+@@ -2,6 +_,7 @@
+ 
+ import net.minecraft.core.BlockPos;
+ import net.minecraft.tags.BlockTags;
++import net.minecraft.world.InteractionHand;
+ import net.minecraft.world.InteractionResult;
+ import net.minecraft.world.entity.Mob;
+ import net.minecraft.world.entity.decoration.LeashFenceKnotEntity;
+@@ -11,6 +_,10 @@
+ import net.minecraft.world.level.block.state.BlockState;
+ import net.minecraft.world.level.gameevent.GameEvent;
+ import net.minecraft.world.phys.AABB;
++import org.bukkit.craftbukkit.v1_19_R1.CraftEquipmentSlot;
++import org.bukkit.event.hanging.HangingPlaceEvent;
++
++import java.util.concurrent.atomic.AtomicReference;
+ 
+ public class LeadItem extends Item {
+    public LeadItem(Item.Properties p_42828_) {
+@@ -24,7 +_,7 @@
+       if (blockstate.m_204336_(BlockTags.f_13039_)) {
+          Player player = p_42834_.m_43723_();
+          if (!level.f_46443_ && player != null) {
+-            m_42829_(player, level, blockpos);
++            bindPlayerMobs(player, level, blockpos, p_42834_.m_43724_());
+          }
+ 
+          level.m_220407_(GameEvent.f_157791_, blockpos, GameEvent.Context.m_223717_(player));
+@@ -34,6 +_,13 @@
+       }
+    }
+ 
++   // LoliServer start - fire HangingPlaceEvent
++   private static AtomicReference<InteractionHand> lolimoe$enumhand = new AtomicReference<>(InteractionHand.MAIN_HAND);
++   public static InteractionResult bindPlayerMobs(Player p_42830_, Level p_42831_, BlockPos p_42832_, InteractionHand hand) { // CraftBukkit - add hand
++      lolimoe$enumhand.set(hand);
++      return m_42829_(p_42830_, p_42831_, p_42832_);
++   }
++
+    public static InteractionResult m_42829_(Player p_42830_, Level p_42831_, BlockPos p_42832_) {
+       LeashFenceKnotEntity leashfenceknotentity = null;
+       boolean flag = false;
+@@ -41,13 +_,30 @@
+       int i = p_42832_.m_123341_();
+       int j = p_42832_.m_123342_();
+       int k = p_42832_.m_123343_();
++      InteractionHand enumhand = lolimoe$enumhand.getAndSet(InteractionHand.MAIN_HAND);
+ 
+       for(Mob mob : p_42831_.m_45976_(Mob.class, new AABB((double)i - 7.0D, (double)j - 7.0D, (double)k - 7.0D, (double)i + 7.0D, (double)j + 7.0D, (double)k + 7.0D))) {
+          if (mob.m_21524_() == p_42830_) {
+             if (leashfenceknotentity == null) {
+                leashfenceknotentity = LeashFenceKnotEntity.m_31844_(p_42831_, p_42832_);
++
++               // CraftBukkit start - fire HangingPlaceEvent
++               org.bukkit.inventory.EquipmentSlot hand = CraftEquipmentSlot.getHand(enumhand);
++               HangingPlaceEvent event = new HangingPlaceEvent((org.bukkit.entity.Hanging) leashfenceknotentity.getBukkitEntity(), p_42830_ != null ? (org.bukkit.entity.Player) p_42830_.getBukkitEntity() : null, p_42831_.getWorld().getBlockAt(i, j, k), org.bukkit.block.BlockFace.SELF, hand);
++               p_42831_.getCraftServer().getPluginManager().callEvent(event);
++               if (event.isCancelled()) {
++                  leashfenceknotentity.m_146870_();
++                  return InteractionResult.PASS;
++               }
++               // CraftBukkit end
++
+                leashfenceknotentity.m_7084_();
+             }
++            // CraftBukkit start
++            if (org.bukkit.craftbukkit.v1_19_R1.event.CraftEventFactory.callPlayerLeashEntityEvent(mob, leashfenceknotentity, p_42830_, enumhand).isCancelled()) {
++               continue;
++            }
++            // CraftBukkit end
+ 
+             mob.m_21463_(leashfenceknotentity, true);
+             flag = true;
+@@ -56,4 +_,5 @@
+ 
+       return flag ? InteractionResult.SUCCESS : InteractionResult.PASS;
+    }
++   // LoliServer end
+ }

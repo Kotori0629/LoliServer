@@ -1,0 +1,21 @@
+--- a/net/minecraft/world/level/block/MagmaBlock.java
++++ b/net/minecraft/world/level/block/MagmaBlock.java
+@@ -27,7 +_,9 @@
+ 
+    public void m_141947_(Level p_153777_, BlockPos p_153778_, BlockState p_153779_, Entity p_153780_) {
+       if (!p_153780_.m_20161_() && p_153780_ instanceof LivingEntity && !EnchantmentHelper.m_44938_((LivingEntity)p_153780_)) {
++         org.bukkit.craftbukkit.v1_19_R1.event.CraftEventFactory.blockDamage = p_153777_.getWorld().getBlockAt(p_153778_.m_123341_(), p_153778_.m_123342_(), p_153778_.m_123343_()); // CraftBukkit
+          p_153780_.m_6469_(DamageSource.f_19309_, 1.0F);
++         org.bukkit.craftbukkit.v1_19_R1.event.CraftEventFactory.blockDamage = null; // CraftBukkit
+       }
+ 
+       super.m_141947_(p_153777_, p_153778_, p_153779_, p_153780_);
+@@ -47,7 +_,7 @@
+ 
+    public void m_213898_(BlockState p_221420_, ServerLevel p_221421_, BlockPos p_221422_, RandomSource p_221423_) {
+       BlockPos blockpos = p_221422_.m_7494_();
+-      if (p_221421_.m_6425_(p_221422_).m_205070_(FluidTags.f_13131_)) {
++      if (p_221421_.m_6425_(p_221422_).canExtinguish(p_221421_, p_221422_)) {
+          p_221421_.m_5594_((Player)null, p_221422_, SoundEvents.f_11937_, SoundSource.BLOCKS, 0.5F, 2.6F + (p_221421_.f_46441_.m_188501_() - p_221421_.f_46441_.m_188501_()) * 0.8F);
+          p_221421_.m_8767_(ParticleTypes.f_123755_, (double)blockpos.m_123341_() + 0.5D, (double)blockpos.m_123342_() + 0.25D, (double)blockpos.m_123343_() + 0.5D, 8, 0.5D, 0.25D, 0.5D, 0.0D);
+       }
