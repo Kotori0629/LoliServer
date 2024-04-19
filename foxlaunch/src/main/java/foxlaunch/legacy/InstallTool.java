@@ -14,7 +14,7 @@ import java.net.URL;
 import java.util.Objects;
 
 public class InstallTool {
-    public static void install(String minecraftVersion, String mcpVersion, String forgeVersion) throws Exception {
+    public static boolean install(String minecraftVersion, String mcpVersion, String forgeVersion) throws Exception {
         if (minecraftVersion == null || mcpVersion == null || forgeVersion == null) {
             throw new RuntimeException(String.format("Missing version data: [minecraft: %s, mcp: %s, forge: %s]", minecraftVersion, mcpVersion, forgeVersion));
         }
@@ -27,7 +27,6 @@ public class InstallTool {
                 Utils.pathToURL("libraries/net/md-5/SpecialSource/1.11.2/SpecialSource-1.11.2.jar"),
                 Utils.pathToURL("libraries/com/opencsv/opencsv/4.4/opencsv-4.4.jar"),
                 Utils.pathToURL("libraries/net/sf/jopt-simple/jopt-simple/5.0.4/jopt-simple-5.0.4.jar"),
-                //Utils.pathToURL("libraries/net/sf/opencsv/opencsv/4.4/opencsv-4.4.jar"),
                 Utils.pathToURL("libraries/com/google/guava/guava/31.0.1-jre/guava-31.0.1-jre.jar"),
                 Utils.pathToURL("libraries/org/ow2/asm/asm-commons/9.6/asm-commons-9.6.jar"),
                 Utils.pathToURL("libraries/org/ow2/asm/asm-analysis/9.6/asm-analysis-9.6.jar"),
@@ -58,7 +57,7 @@ public class InstallTool {
                 Utils.pathToURL("libraries/commons-io/commons-io/2.11.0/commons-io-2.11.0.jar"),
                 Utils.pathToURL("libraries/com/google/guava/guava/31.0.1-jre/guava-31.0.1-jre.jar"),
                 Utils.pathToURL("libraries/net/sf/jopt-simple/jopt-simple/5.0.4/jopt-simple-5.0.4.jar"),
-                //Utils.pathToURL("libraries/commons-io/commons-io/2.11.0/commons-io-2.11.0.jar")
+                Utils.pathToURL("libraries/commons-io/commons-io/2.11.0/commons-io-2.11.0.jar")
         };
 
         File installHASH = new File("foxlaunch-data/install.dat");
@@ -93,7 +92,7 @@ public class InstallTool {
             if (installHASH.exists()) {
                 try (BufferedReader reader = new BufferedReader(new InputStreamReader(new FileInputStream(installHASH)))) {
                     if (Objects.equals(reader.readLine(), Objects.requireNonNull(Utils.getFileSHA256(serverJar), serverJar.getName()) + Objects.requireNonNull(Utils.getFileSHA256(serverLZMA), serverLZMA.getName()))) {
-                        return;
+                        return false;
                     }
                 }
             }
@@ -104,31 +103,18 @@ public class InstallTool {
         System.setOut(logOutPrint);
 
         // BUNDLER_EXTRACT
-        originOutPrint.println("Unpacking vanilla server jar..");
+        originOutPrint.println("[FoxLaunch] Unpacking vanilla server jar..");
 
         if(Utils.isJarCorrupted(minecraftUnpack)) {
             minecraftUnpack.delete();
         }
 
         if (!minecraftUnpack.exists()) {
-            Utils.relaunch(
-                    "net.minecraftforge.installertools.ConsoleTool",
-                    libInstallerTools,
-                    new String[] {
-                            "--task",
-                            "BUNDLER_EXTRACT",
-                            "--input",
-                            minecraftServer.getAbsolutePath(),
-                            "--output",
-                            minecraftUnpack.getAbsolutePath(),
-                            "--jar-only"
-                    },
-                    true
-            );
+            Utils.unpackZipEntry(minecraftServer, minecraftUnpack, "META-INF/versions/" + minecraftVersion + "/server-" + minecraftVersion + ".jar");
         }
 
         // MCP_DATA
-        originOutPrint.println("Initializing MCP data..");
+        originOutPrint.println("[FoxLaunch] Initializing MCP data..");
 
         if(!mcpMappings.exists()) {
             Utils.relaunch(
@@ -149,7 +135,7 @@ public class InstallTool {
         }
 
         // DOWNLOAD_MOJMAPS
-        originOutPrint.println("Downloading vanilla mappings..");
+        originOutPrint.println("[FoxLaunch] Downloading vanilla mappings..");
 
         if (!minecraftMappings.exists()) {
             Utils.relaunch(
@@ -170,7 +156,7 @@ public class InstallTool {
         }
 
         // MERGE_MAPPING
-        originOutPrint.println("Merging mappings..");
+        originOutPrint.println("[FoxLaunch] Merging mappings..");
 
         if (!mergedMappings.exists()) {
             Utils.relaunch(
@@ -193,7 +179,7 @@ public class InstallTool {
         }
 
         // JarSplitter
-        originOutPrint.println("Splitting server jar..");
+        originOutPrint.println("[FoxLaunch] Splitting server jar..");
 
         if (Utils.isJarCorrupted(minecraftSlim) || Utils.isJarCorrupted(minecraftExtra)) {
             minecraftSlim.delete();
@@ -219,7 +205,7 @@ public class InstallTool {
         }
 
         // ForgeAutoRenamingTool
-        originOutPrint.println("Remapping server jar..");
+        originOutPrint.println("[FoxLaunch] Remapping server jar..");
 
         if(Utils.isJarCorrupted(minecraftSrg)) {
             minecraftSrg.delete();
@@ -246,7 +232,7 @@ public class InstallTool {
         }
 
         // BinaryPatcher
-        originOutPrint.println("Applying patches..");
+        originOutPrint.println("[FoxLaunch] Applying patches..");
 
         Utils.relaunch(
                 "net.minecraftforge.binarypatcher.ConsoleTool",
@@ -269,5 +255,7 @@ public class InstallTool {
         try (BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(installHASH)))) {
             writer.write( Objects.requireNonNull(Utils.getFileSHA256(serverJar), serverJar.getName()) + Objects.requireNonNull(Utils.getFileSHA256(serverLZMA), serverLZMA.getName()));
         }
+
+        return true;
     }
 }

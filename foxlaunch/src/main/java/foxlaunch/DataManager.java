@@ -20,40 +20,13 @@ import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
 
 public class DataManager {
-    private static final boolean isWindows = System.getProperty("os.name").toLowerCase().contains("windows");
     private static final Map<String, File> librariesMap = new TreeMap<>();
+    private static final Map<String, File> librariesWithoutLaunchMap = new TreeMap<>();
     private static final Map<String, String> librariesHashMap = new TreeMap<>();
     private static final Map<String, File> foxLaunchLibsMap = new TreeMap<>();
     private static final Map<String, String> versionData = new TreeMap<>();
-    private static final List<String> launchArgs = new ArrayList<>();
 
-    public static void setupLibrariesMap() {
-        try (JarFile serverJar = new JarFile(Utils.findServerJar())) {
-            String classPath = (String) serverJar.getManifest().getMainAttributes().get(Attributes.Name.CLASS_PATH);
-            if (classPath != null) {
-                String[] libraries = classPath.split(" ");
-                for (String library : libraries) {
-                    File file = new File(library);
-                    librariesMap.put(file.getName(), file.getParentFile());
-                }
-            } else {
-                throw new RuntimeException("Missing MANIFEST.MF?");
-            }
-
-            if (librariesMap.size() == 0) {
-                throw new RuntimeException("Class-Path is empty!");
-            }
-
-            librariesMap.put("minecraft_server.1.19.2.jar", new File("foxlaunch-data/"));
-            librariesMap.put("bootstraplauncher-1.1.2.jar", new File("libraries/cpw/mods/bootstraplauncher/1.1.2/"));
-            librariesMap.put("opencsv-4.4.jar", new File("libraries/com/opencsv/opencsv/4.4/"));
-            librariesMap.keySet().removeIf(s -> s.startsWith("server-") && s.endsWith("-extra.jar"));
-        } catch (Exception e) {
-            throw new RuntimeException("Could not load libraries!", e);
-        }
-    }
-
-    public static void unpackData() {
+    public static void setup() {
         File foxLaunchLibs = new File("foxlaunch-libs");
         if (!foxLaunchLibs.exists()) {
             foxLaunchLibs.mkdirs();
@@ -64,7 +37,29 @@ public class DataManager {
             foxLaunchData.mkdirs();
         }
 
-        try (JarFile serverJar = new JarFile(System.getProperty("java.class.path"))) {
+        try (JarFile serverJar = new JarFile(Utils.findServerJar())) {
+            String classPath = Objects.requireNonNull(serverJar.getManifest().getMainAttributes().getValue("Installer-Class-Path"), "Missing MANIFEST.MF?");
+            String[] libraries = classPath.split(" ");
+            for (String library : libraries) {
+                File file = new File(library);
+                librariesWithoutLaunchMap.put(file.getName(), file.getParentFile());
+            }
+
+            if (librariesWithoutLaunchMap.size() == 0) {
+                throw new RuntimeException("Installer Class-Path is empty!");
+            }
+
+            librariesWithoutLaunchMap.put("minecraft_server.1.19.2.jar", new File("foxlaunch-data/"));
+            librariesWithoutLaunchMap.put("commons-lang-2.6.jar", new File("libraries/commons-lang/commons-lang/2.6/"));
+            librariesWithoutLaunchMap.put("commons-codec-1.10.jar", new File("libraries/commons-codec/commons-codec/1.10/"));
+
+            librariesMap.put("bootstraplauncher-1.1.2.jar", new File("libraries/cpw/mods/bootstraplauncher/1.1.2/"));
+            librariesMap.put("JarJarFileSystems-0.3.16.jar", new File("libraries/net/minecraftforge/JarJarFileSystems/0.3.16/"));
+
+            versionData.put("minecraft", Objects.requireNonNull(serverJar.getManifest().getAttributes("net/minecraftforge/versions/mcp/").getValue(Attributes.Name.SPECIFICATION_VERSION)));
+            versionData.put("mcp", Objects.requireNonNull(serverJar.getManifest().getAttributes("net/minecraftforge/versions/mcp/").getValue(Attributes.Name.IMPLEMENTATION_VERSION)));
+            versionData.put("forge", Objects.requireNonNull(serverJar.getManifest().getAttributes("net/minecraftforge/versions/forge/").getValue(Attributes.Name.IMPLEMENTATION_VERSION)));
+
             Enumeration<JarEntry> entry = serverJar.entries();
             while (entry.hasMoreElements()) {
                 JarEntry jarEntry = entry.nextElement();
@@ -125,7 +120,18 @@ public class DataManager {
                                     }
                                     out.flush();
                                 }
-                            } else if (Objects.equals(name[1], "libraries.txt")) {
+                            } else if (Objects.equals(name[1], "libraries-launch.txt")) {
+                                try (BufferedReader reader = new BufferedReader(new InputStreamReader(serverJar.getInputStream(jarEntry)))) {
+                                    String line = reader.readLine();
+                                    if (line.startsWith("libraries/")) {
+                                        String[] split = line.split(";");
+                                        for (String library : split) {
+                                            File file = new File(library);
+                                            librariesMap.put(file.getName(), file.getParentFile());
+                                        }
+                                    }
+                                }
+                            } else if (Objects.equals(name[1], "libraries-all.txt")) {
                                 try (BufferedReader reader = new BufferedReader(new InputStreamReader(serverJar.getInputStream(jarEntry)))) {
                                     String line = reader.readLine();
                                     if (Objects.equals(line, "===ALGORITHM SHA-256")) {
@@ -139,25 +145,6 @@ public class DataManager {
                                             }
                                         }
                                     }
-                                }
-                            } else if (Objects.equals(name[1], isWindows ? "win_args.txt" : "unix_args.txt")) {
-                                try (BufferedReader reader = new BufferedReader(new InputStreamReader(serverJar.getInputStream(jarEntry)))) {
-                                    String line;
-                                    while ((line = reader.readLine()) != null) {
-                                        launchArgs.add(line);
-                                    }
-                                }
-                            }
-                        } else if (Objects.equals(name[0], "versions")) {
-                            try (BufferedReader reader = new BufferedReader(new InputStreamReader(serverJar.getInputStream(jarEntry)))) {
-                                if (Objects.equals(name[1], "minecraft.txt")) {
-                                    versionData.put("minecraft", reader.readLine());
-                                } else if (Objects.equals(name[1], "mcp.txt")) {
-                                    versionData.put("mcp", reader.readLine());
-                                } else if (Objects.equals(name[1], "forge.txt")) {
-                                    versionData.put("forge", reader.readLine());
-                                } else if (Objects.equals(name[1], "lolimoe.txt")) {
-                                    versionData.put("lolimoe", reader.readLine());
                                 }
                             }
                         }
@@ -173,15 +160,17 @@ public class DataManager {
         Map<File, String> needDownloadLibrariesMap = new TreeMap<>();
         Map<File, String> needDownloadMappingDataMap = new TreeMap<>();
 
-        for (Map.Entry<String, File> libraryEntry : librariesMap.entrySet()) {
-            String filename = libraryEntry.getKey();
-            String sha256 = librariesHashMap.get(filename);
+        for (Map<String, File> librariesMap : new Map[]{ librariesMap, librariesWithoutLaunchMap }) {
+            for (Map.Entry<String, File> libraryEntry : librariesMap.entrySet()) {
+                String filename = libraryEntry.getKey();
+                String sha256 = librariesHashMap.get(filename);
 
-            sha256 = sha256 == null ? Utils.getMissingSHA256(filename) : sha256.toUpperCase();
+                sha256 = sha256 == null ? Utils.getMissingSHA256(filename) : sha256.toUpperCase();
 
-            File file = new File(libraryEntry.getValue(), libraryEntry.getKey());
-            if (!file.exists() || (sha256 != null && !Objects.equals(Utils.getFileSHA256(file), sha256))) {
-                needDownloadLibrariesMap.put(file, sha256);
+                File file = new File(libraryEntry.getValue(), libraryEntry.getKey());
+                if (!file.exists() || (sha256 != null && !Objects.equals(Utils.getFileSHA256(file), sha256))) {
+                    needDownloadLibrariesMap.put(file, sha256);
+                }
             }
         }
 
@@ -202,6 +191,9 @@ public class DataManager {
             System.out.println(LanguageUtils.I18nToString("launch.lib_missing"));
             LibrariesDownloader.setupDownloadSource();
             for (Map.Entry<File, String> libraryEntry : needDownloadLibrariesMap.entrySet()) {
+                if (Objects.equals(libraryEntry.getKey().getName(), "server-" + versionData.get("minecraft") + "-" + versionData.get("mcp") + "-extra.jar")) {
+                    continue;
+                }
                 LibrariesDownloader.tryDownload(libraryEntry.getKey(), libraryEntry.getValue());
             }
             for (Map.Entry<File, String> libraryEntry : needDownloadMappingDataMap.entrySet()) {
@@ -211,53 +203,20 @@ public class DataManager {
         }
     }
 
+    public static Map<String, File> getLibrariesMap() {
+        return librariesMap;
+    }
+
     public static String getVersionData(String target) {
         return versionData.get(target);
     }
 
-    public static List<String> getLaunchArgs() {
-        return launchArgs;
-    }
-
-    public static void generateLaunchScript(String[] args) throws Throwable {
-        String javaPath = System.getProperty("java.home");
-        javaPath = javaPath == null ? "java" : new File(javaPath, "bin/java").getCanonicalPath();
-        if (isWindows) javaPath = "@\"" + javaPath + "\"";
-
-        launchArgs.add(0, javaPath);
-        launchArgs.addAll(Arrays.asList(args));
-
-        File scriptFile = new File(isWindows ? "Launch-LoliServer-1.19.2.bat" : "launch-catserver-1.19.2.sh");
-
-        if (scriptFile.exists()) {
-            scriptFile.delete();
-        }
-
-        try (BufferedWriter out = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(scriptFile)))) {
-            for (String launchArg : launchArgs) {
-                out.write(launchArg);
-                out.write(" ");
-            }
-            out.flush();
-            System.out.println("A startup script has been generated. You need to use it to start the server: " + scriptFile.getCanonicalPath());
-            System.out.println("If you update the server, need to delete it and re-run the server to generate.");
-        } catch (Exception e) {
-            System.out.println("Failed to generate startup script: " + e.toString());
-        }
-
-        if (!isWindows) {
-            try {
-                Runtime.getRuntime().exec("chmod +x " + scriptFile.getCanonicalPath());
-            } catch (Exception ignored) {}
-        }
-    }
-
     protected static void gc() {
         librariesMap.clear();
+        librariesWithoutLaunchMap.clear();
         librariesHashMap.clear();
         foxLaunchLibsMap.clear();
         versionData.clear();
-        launchArgs.clear();
 
         System.gc();
     }
