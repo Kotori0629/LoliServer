@@ -1,0 +1,11 @@
+--- a/net/minecraft/world/item/DispensibleContainerItem.java
++++ b/net/minecraft/world/item/DispensibleContainerItem.java
+@@ -6,7 +_,7 @@
+ import net.minecraft.world.level.Level;
+ import net.minecraft.world.phys.BlockHitResult;
+ 
+-public interface DispensibleContainerItem {
++public interface DispensibleContainerItem extends net.minecraftforge.common.extensions.IForgeDispensibleContainerItem {
+    default void m_142131_(@Nullable Player p_150817_, Level p_150818_, ItemStack p_150819_, BlockPos p_150820_) {
+    }
+ 

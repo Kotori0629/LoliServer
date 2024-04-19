@@ -76,55 +76,81 @@
                       if (!p_40703_.f_46443_) {
                          CriteriaTriggers.f_10576_.m_38772_((ServerPlayer)p_40704_, itemstack1);
                       }
-@@ -72,8 +_,8 @@
+@@ -72,8 +_,15 @@
                 return InteractionResultHolder.m_19100_(itemstack);
              } else {
                 BlockState blockstate = p_40703_.m_8055_(blockpos);
 -               BlockPos blockpos2 = blockstate.m_60734_() instanceof LiquidBlockContainer && this.f_40687_ == Fluids.f_76193_ ? blockpos : blockpos1;
 -               if (this.m_142073_(p_40704_, p_40703_, blockpos2, blockhitresult)) {
 +               BlockPos blockpos2 = canBlockContainFluid(p_40703_, blockpos, blockstate) ? blockpos : blockpos1;
-+               if (this.emptyContents(p_40704_, p_40703_, blockpos2, blockhitresult, blockhitresult.m_82434_(), blockpos, itemstack, p_40705_)) { // CraftBukkit
++
++               // CatServer start
++               this.useDirection(blockhitresult.m_82434_());
++               this.useBlockPos(blockpos);
++               this.useHand(p_40705_);
++               // CatServer end
++
++               if (this.emptyContents(p_40704_, p_40703_, blockpos2, blockhitresult, itemstack)) { // CatServer
                    this.m_142131_(p_40704_, p_40703_, itemstack, blockpos2);
                    if (p_40704_ instanceof ServerPlayer) {
                       CriteriaTriggers.f_10591_.m_59469_((ServerPlayer)p_40704_, blockpos2, itemstack);
-@@ -98,7 +_,22 @@
+@@ -98,7 +_,37 @@
     public void m_142131_(@Nullable Player p_150711_, Level p_150712_, ItemStack p_150713_, BlockPos p_150714_) {
     }
  
--   public boolean m_142073_(@Nullable Player p_150716_, Level p_150717_, BlockPos p_150718_, @Nullable BlockHitResult p_150719_) {
-+   // LoliServer start - fire PlayerBucketEmptyEvent
-+   public AtomicReference<Direction> lolimoe$enumdirection = new AtomicReference<>(Direction.UP);
-+   public AtomicReference<BlockPos> lolimoe$clickedBlockPos = new AtomicReference<>(BlockPos.f_121853_);
-+   public AtomicReference<ItemStack> lolimoe$emptyContentsItemStack = new AtomicReference<>(ItemStack.f_41583_);
-+   public AtomicReference<InteractionHand> lolimoe$enumhand = new AtomicReference<>(InteractionHand.MAIN_HAND);
++   // CatServer start
++   private @Nullable Direction useDirection;
++   private @Nullable BlockPos useBlockPos;
++   private @Nullable InteractionHand useHand;
++
++   private void useDirection(Direction direction) {
++      this.useDirection = direction;
++   }
++
++   private void useBlockPos(BlockPos blockPos) {
++      this.useBlockPos = blockPos;
++   }
++
++   private void useHand(InteractionHand hand) {
++      this.useHand = hand;
++   }
++
++   @Deprecated //Forge: use the ItemStack sensitive version
+    public boolean m_142073_(@Nullable Player p_150716_, Level p_150717_, BlockPos p_150718_, @Nullable BlockHitResult p_150719_) {
++      return this.emptyContents(p_150716_, p_150717_, p_150718_, p_150719_, null);
++   }
 +
 +   public boolean emptyContents(@Nullable Player p_150716_, Level p_150717_, BlockPos p_150718_, @Nullable BlockHitResult p_150719_, Direction enumdirection, BlockPos clicked, ItemStack itemstack, InteractionHand enumhand) {
-+      lolimoe$enumdirection.set(enumdirection);
-+      lolimoe$clickedBlockPos.set(clicked);
-+      lolimoe$emptyContentsItemStack.set(itemstack);
-+      lolimoe$enumhand.set(enumhand);
-+      return m_142073_(p_150716_, p_150717_, p_150718_, p_150719_);
++      this.useDirection(enumdirection);
++      this.useBlockPos(clicked);
++      this.useHand(enumhand);
++      return emptyContents(p_150716_, p_150717_, p_150718_, p_150719_, itemstack);
 +   }
-+   // LoliServer end
++   // CatServer end
 +
-+      public boolean m_142073_(@Nullable Player p_150716_, Level p_150717_, BlockPos p_150718_, @Nullable BlockHitResult p_150719_) {
++   public boolean emptyContents(@Nullable Player p_150716_, Level p_150717_, BlockPos p_150718_, @Nullable BlockHitResult p_150719_, @Nullable ItemStack container) {
        if (!(this.f_40687_ instanceof FlowingFluid)) {
           return false;
        } else {
-@@ -107,8 +_,26 @@
+@@ -107,8 +_,34 @@
           Material material = blockstate.m_60767_();
           boolean flag = blockstate.m_60722_(this.f_40687_);
           boolean flag1 = blockstate.m_60795_() || flag || block instanceof LiquidBlockContainer && ((LiquidBlockContainer)block).m_6044_(p_150717_, p_150718_, blockstate, this.f_40687_);
-+         // LoliServer start - fire PlayerBucketEmptyEvent
-+         Direction enumdirection = lolimoe$enumdirection.getAndSet(Direction.UP);
-+         BlockPos clicked = lolimoe$clickedBlockPos.getAndSet(BlockPos.f_121853_);
-+         ItemStack itemstack = lolimoe$emptyContentsItemStack.getAndSet(ItemStack.f_41583_);
-+         InteractionHand enumhand = lolimoe$enumhand.getAndSet(InteractionHand.MAIN_HAND);
-+         // LoliServer end
++         java.util.Optional<net.minecraftforge.fluids.FluidStack> containedFluidStack = java.util.Optional.ofNullable(container).flatMap(net.minecraftforge.fluids.FluidUtil::getFluidContained);
++         // CatServer start
++         Direction enumdirection = this.useDirection;
++         BlockPos clicked = this.useBlockPos;
++         InteractionHand enumhand = this.useHand;
++
++         // Reset
++         this.useDirection = null;
++         this.useBlockPos = null;
++         this.useHand = null;
++         // CatServer end
 +
 +         // CraftBukkit start
 +         if (flag1 && p_150716_ != null) {
-+            PlayerBucketEmptyEvent event = CraftEventFactory.callPlayerBucketEmptyEvent((ServerLevel) p_150717_, p_150716_, p_150718_, clicked, enumdirection, itemstack, enumhand);
++            PlayerBucketEmptyEvent event = CraftEventFactory.callPlayerBucketEmptyEvent((ServerLevel) p_150717_, p_150716_, p_150718_, clicked, enumdirection, container, enumhand);
 +            if (event.isCancelled()) {
 +               ((ServerPlayer) p_150716_).f_8906_.m_9829_(new ClientboundBlockUpdatePacket(p_150717_, p_150718_)); // SPIGOT-4238: needed when looking through entity
 +               ((ServerPlayer) p_150716_).getBukkitEntity().updateInventory(); // SPIGOT-4541
@@ -135,7 +161,10 @@
 +
           if (!flag1) {
 -            return p_150719_ != null && this.m_142073_(p_150716_, p_150717_, p_150719_.m_82425_().m_121945_(p_150719_.m_82434_()), (BlockHitResult)null);
-+            return p_150719_ != null && this.emptyContents(p_150716_, p_150717_, p_150719_.m_82425_().m_121945_(p_150719_.m_82434_()), (BlockHitResult)null, enumdirection, clicked, itemstack, enumhand); // CraftBukkit
++            return p_150719_ != null && this.emptyContents(p_150716_, p_150717_, p_150719_.m_82425_().m_121945_(p_150719_.m_82434_()), (BlockHitResult)null, enumdirection, clicked, container, enumhand); // CraftBukkit
++         } else if (containedFluidStack.isPresent() && this.f_40687_.getFluidType().isVaporizedOnPlacement(p_150717_, p_150718_, containedFluidStack.get())) {
++            this.f_40687_.getFluidType().onVaporize(p_150716_, p_150717_, p_150718_, containedFluidStack.get());
++            return true;
           } else if (p_150717_.m_6042_().f_63857_() && this.f_40687_.m_205067_(FluidTags.f_13131_)) {
              int i = p_150718_.m_123341_();
              int j = p_150718_.m_123342_();

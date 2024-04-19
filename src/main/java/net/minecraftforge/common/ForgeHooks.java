@@ -26,6 +26,7 @@ import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParseException;
 import com.mojang.serialization.Codec;
+import com.mojang.serialization.JsonOps;
 import com.mojang.serialization.Lifecycle;
 
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
@@ -37,6 +38,8 @@ import net.minecraft.commands.SharedSuggestionProvider;
 import net.minecraft.core.*;
 import net.minecraft.network.chat.*;
 import net.minecraft.network.chat.contents.LiteralContents;
+import net.minecraft.resources.RegistryResourceAccess;
+import net.minecraftforge.common.crafting.conditions.ICondition;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.packs.PackType;
 import net.minecraft.tags.BlockTags;
@@ -726,7 +729,11 @@ public class ForgeHooks
     public static int onGrindstoneChange(@NotNull ItemStack top, @NotNull ItemStack bottom, Container outputSlot, int xp)
     {
         GrindstoneEvent.OnplaceItem e = new GrindstoneEvent.OnplaceItem(top, bottom, xp);
-        if (MinecraftForge.EVENT_BUS.post(e)) return e.getXp();
+        if (MinecraftForge.EVENT_BUS.post(e))
+        {
+            outputSlot.setItem(0, ItemStack.EMPTY);
+            return -1;
+        }
         if (e.getOutput().isEmpty()) return Integer.MIN_VALUE;
 
         outputSlot.setItem(0, e.getOutput());
@@ -1610,10 +1617,22 @@ public class ForgeHooks
 
     public static boolean canUseEntitySelectors(SharedSuggestionProvider provider)
     {
-        if (provider instanceof CommandSourceStack source && source.source instanceof ServerPlayer player)
+        if (provider.hasPermission(Commands.LEVEL_GAMEMASTERS))
+        {
+            return true;
+        }
+        else if (provider instanceof CommandSourceStack source && source.source instanceof ServerPlayer player)
         {
             return PermissionAPI.getPermission(player, ForgeMod.USE_SELECTORS_PERMISSION);
         }
-        return provider.hasPermission(Commands.LEVEL_GAMEMASTERS);
+        return false;
+    }
+
+    @SuppressWarnings("unchecked")
+    public static <E> Collection<Map.Entry<ResourceKey<E>, RegistryResourceAccess.EntryThunk<E>>> filterThunks(Map<ResourceKey<E>, RegistryResourceAccess.EntryThunk<E>> map)
+    {
+        return map.entrySet().stream().filter(e ->
+                ((RegistryResourceAccess.EntryThunk<Boolean>)e.getValue()).parseElement(JsonOps.INSTANCE, ICondition.IContext.DECODER)
+                        .get().left().get().value()).toList(); // Validity of this .get() call is enforced by the above Decoder object, which only returns DataResult.success.
     }
 }

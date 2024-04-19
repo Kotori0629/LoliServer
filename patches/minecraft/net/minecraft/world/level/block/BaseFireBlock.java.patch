@@ -40,6 +40,15 @@
     }
  
     protected void m_142387_(Level p_152139_, Player p_152140_, BlockPos p_152141_, BlockState p_152142_) {
+@@ -170,7 +_,7 @@
+          boolean flag = false;
+ 
+          for(Direction direction : Direction.values()) {
+-            if (p_49270_.m_8055_(blockpos$mutableblockpos.m_122190_(p_49271_).m_122173_(direction)).m_60713_(Blocks.f_50080_)) {
++            if (p_49270_.m_8055_(blockpos$mutableblockpos.m_122190_(p_49271_).m_122173_(direction)).isPortalFrame(p_49270_, blockpos$mutableblockpos)) {
+                flag = true;
+                break;
+             }
 @@ -184,4 +_,12 @@
           }
        }
