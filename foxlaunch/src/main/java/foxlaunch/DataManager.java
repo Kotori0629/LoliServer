@@ -183,7 +183,7 @@ public class DataManager {
 
             File minecraftMappings = new File(String.format("foxlaunch-data/server-%s-mappings.txt", minecraftVersion));
             if (!minecraftMappings.exists() || !Objects.equals(Utils.getFileSHA256(minecraftMappings), Utils.getMissingSHA256(minecraftMappings.getName()))) {
-                needDownloadMappingDataMap.put(new File(String.format("foxlaunch-data/server-%s-mappings.zip", minecraftVersion)), Utils.getMissingSHA256(minecraftMappings.getName()));
+                needDownloadMappingDataMap.put(new File(String.format("foxlaunch-data/server-%s-mappings.packed", minecraftVersion)), Utils.getMissingSHA256(minecraftMappings.getName()));
             }
         }
 
