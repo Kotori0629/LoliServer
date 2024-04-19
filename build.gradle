@@ -1265,44 +1265,10 @@ project(':forge') {
                 [
                         'libraries/' + Util.getMavenPath(rootProject.tasks.findByPath(':fmlloader:jar')),
                         "libraries/net/minecraft/server/${MC_VERSION}-${MCP_VERSION}/server-${MC_VERSION}-${MCP_VERSION}-extra.jar",
-                        //"libraries/cpw/mods/bootstraplauncher/1.1.2/bootstraplauncher-1.1.2.jar",
-                        //"libraries/net/minecraftforge/installertools/1.2.10/installertools-1.2.10.jar"
+                        "libraries/cpw/mods/bootstraplauncher/1.1.2/bootstraplauncher-1.1.2.jar",
+                        "libraries/net/minecraftforge/installertools/1.4.1/installertools-1.4.1.jar"
                 ]
         def claimed = CLASS_PATH.collect { it.rsplit('/', 2)[0] }.toSet() // Allow us to override versions
-        CLASS_PATH +=
-                (
-                        [
-                                "libraries/com/github/oshi/oshi-core/5.8.5/oshi-core-5.8.5.jar",
-                                "libraries/com/google/code/gson/gson/2.8.9/gson-2.8.9.jar",
-                                "libraries/com/google/guava/failureaccess/1.0.1/failureaccess-1.0.1.jar",
-                                "libraries/com/google/guava/guava/31.0.1-jre/guava-31.0.1-jre.jar",
-                                "libraries/com/mojang/authlib/3.11.49/authlib-3.11.49.jar",
-                                "libraries/com/mojang/brigadier/1.0.18/brigadier-1.0.18.jar",
-                                "libraries/com/mojang/datafixerupper/5.0.28/datafixerupper-5.0.28.jar",
-                                "libraries/com/mojang/javabridge/1.2.24/javabridge-1.2.24.jar",
-                                "libraries/com/mojang/logging/1.0.0/logging-1.0.0.jar",
-                                "libraries/commons-io/commons-io/2.11.0/commons-io-2.11.0.jar",
-                                "libraries/io/netty/netty-buffer/4.1.77.Final/netty-buffer-4.1.77.Final.jar",
-                                "libraries/io/netty/netty-codec/4.1.77.Final/netty-codec-4.1.77.Final.jar",
-                                "libraries/io/netty/netty-common/4.1.77.Final/netty-common-4.1.77.Final.jar",
-                                "libraries/io/netty/netty-handler/4.1.77.Final/netty-handler-4.1.77.Final.jar",
-                                "libraries/io/netty/netty-resolver/4.1.77.Final/netty-resolver-4.1.77.Final.jar",
-                                "libraries/io/netty/netty-transport/4.1.77.Final/netty-transport-4.1.77.Final.jar",
-                                "libraries/io/netty/netty-transport-classes-epoll/4.1.77.Final/netty-transport-classes-epoll-4.1.77.Final.jar",
-                                "libraries/io/netty/netty-transport-native-epoll/4.1.77.Final/netty-transport-native-epoll-4.1.77.Final-linux-x86_64.jar",
-                                "libraries/io/netty/netty-transport-native-epoll/4.1.77.Final/netty-transport-native-epoll-4.1.77.Final-linux-aarch_64.jar",
-                                "libraries/io/netty/netty-transport-native-unix-common/4.1.77.Final/netty-transport-native-unix-common-4.1.77.Final.jar",
-                                "libraries/it/unimi/dsi/fastutil/8.5.6/fastutil-8.5.6.jar",
-                                "libraries/net/java/dev/jna/jna/5.10.0/jna-5.10.0.jar",
-                                "libraries/net/java/dev/jna/jna-platform/5.10.0/jna-platform-5.10.0.jar",
-                                "libraries/net/sf/jopt-simple/jopt-simple/5.0.4/jopt-simple-5.0.4.jar",
-                                "libraries/org/apache/commons/commons-lang3/3.12.0/commons-lang3-3.12.0.jar",
-                                "libraries/org/apache/logging/log4j/log4j-api/2.17.0/log4j-api-2.17.0.jar",
-                                "libraries/org/apache/logging/log4j/log4j-core/2.17.0/log4j-core-2.17.0.jar",
-                                "libraries/org/apache/logging/log4j/log4j-slf4j18-impl/2.17.0/log4j-slf4j18-impl-2.17.0.jar",
-                                "libraries/org/slf4j/slf4j-api/1.8.0-beta4/slf4j-api-1.8.0-beta4.jar",
-                        ].findAll { it.startsWith('libraries/') && !claimed.contains(it.rsplit('/', 2)[0]) }
-                )
         def MODULE_PATH = Util.getArtifactsOffline(project, project.configurations.moduleonly, false).values().collect { "libraries/${it.downloads.artifact.path}" }
         def tokens = [
                 TASK         : project.name.equals('forge') ? 'forgeserver' : 'fmlserver',
@@ -1375,6 +1341,30 @@ project(':forge') {
         from(rootProject.file('server_files/args.txt')) {
             filter(ReplaceTokens, tokens: tokens + [MODULE_PATH: MODULE_PATH.join(':'), CLASS_PATH: CLASS_PATH.join(':')])
             rename { 'data/unix_args.txt' }
+        }
+
+        from(rootProject.file('server_libs/installertools-1.2.10.jar')) {
+            rename { 'data/installertools-1.3.0.jar' }
+        }
+
+        from(rootProject.file('server_libs/jarsplitter-1.1.4.jar')) {
+            rename { 'data/jarsplitter-1.1.4.jar' }
+        }
+
+        from(rootProject.file('server_libs/ForgeAutoRenamingTool-0.1.22.jar')) {
+            rename { 'data/ForgeAutoRenamingTool-0.1.22.jar' }
+        }
+
+        from(rootProject.file('server_libs/binarypatcher-1.0.12.jar')) {
+            rename { 'data/binarypatcher-1.0.12.jar' }
+        }
+
+        from(rootProject.file('server_libs/srgutils-0.4.11.jar')) {
+            rename { 'data/srgutils-0.4.11.jar' }
+        }
+
+        from(rootProject.file('server_libs/fastcsv-2.0.0.jar')) {
+            rename { 'data/fastcsv-2.0.0.jar' }
         }
     }
 
