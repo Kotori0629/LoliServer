@@ -18,6 +18,7 @@ include ':mcp'
 include ':clean'
 include ':fmlonly'
 include ':forge'
+include ':foxlaunch'
 
 project(":mcp").projectDir = file("projects/mcp")
 project(":clean").projectDir = file("projects/clean")
