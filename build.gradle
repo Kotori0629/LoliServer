@@ -31,15 +31,15 @@ ext {
     SPI_VERSION = '6.0.0'
     ACCESSTRANSFORMERS_VERSION = '8.0.4'
     COREMODS_VERSION = '5.0.1'
-    EVENTBUS_VERSION = '6.0.0'
+    EVENTBUS_VERSION = '6.0.3'
     MODLAUNCHER_VERSION = '10.0.8'
     SECUREJARHANDLER_VERSION = '2.1.4'
     BOOTSTRAPLAUNCHER_VERSION = '1.1.2'
-    ASM_VERSION = '9.3'
+    ASM_VERSION = '9.6'
     INSTALLER_VERSION = '2.1.+'
     MIXIN_VERSION = '0.8.5'
     TERMINALCONSOLEAPPENDER_VERSION = '1.2.0'
-    JLINE_VERSION = '3.12.1'
+    JLINE_VERSION = '3.21.0'
     NIGHTCONFIG_VERSION = '3.6.4'
     JETBRAINS_ANNOTATIONS_VERSION = '23.0.0'
     SLF4J_API_VERSION = '1.8.0-beta4'
@@ -57,7 +57,7 @@ ext {
     FORGE_VERSION = '43.1.52'
     VERSION = '1.19.2-' + FORGE_VERSION
 
-    SPECIAL_SOURCE = 'net.md-5:SpecialSource:1.11.0'
+    SPECIAL_SOURCE = 'net.md-5:SpecialSource:1.11.2'
     BINPATCH_TOOL = 'net.minecraftforge:binarypatcher:1.1.1:fatjar'
     INSTALLER_TOOLS = 'net.minecraftforge:installertools:1.3.0'
     JAR_SPLITTER = 'net.minecraftforge:jarsplitter:1.1.4'
@@ -187,7 +187,7 @@ def sharedDeps = {
     installer 'org.xerial:sqlite-jdbc:3.36.0.3'
     installer 'mysql:mysql-connector-java:8.0.29'
     installer 'org.apache.logging.log4j:log4j-iostreams:2.17.1'
-    installer 'net.md-5:SpecialSource:1.11.0'
+    installer 'net.md-5:SpecialSource:1.11.2'
 
     // spigot
     installer 'net.md-5:bungeecord-chat:1.16-R0.4'
@@ -437,7 +437,6 @@ def sharedFmlonlyForge = { Project prj ->
                                     "libraries/org/apache/logging/log4j/log4j-core/2.17.0/log4j-core-2.17.0.jar",
                                     "libraries/org/apache/logging/log4j/log4j-slf4j18-impl/2.17.0/log4j-slf4j18-impl-2.17.0.jar",
                                     "libraries/org/slf4j/slf4j-api/1.8.0-beta4/slf4j-api-1.8.0-beta4.jar",
-                                    "libraries/commons-lang/commons-lang/2.6-lolimoe/commons-lang-2.6-lolimoe.jar"
                             ].findAll { it.startsWith('libraries/') && !claimed.contains(it.rsplit('/', 2)[0]) }
                     )
 
@@ -1332,7 +1331,6 @@ project(':forge') {
                                 "libraries/org/apache/logging/log4j/log4j-core/2.17.0/log4j-core-2.17.0.jar",
                                 "libraries/org/apache/logging/log4j/log4j-slf4j18-impl/2.17.0/log4j-slf4j18-impl-2.17.0.jar",
                                 "libraries/org/slf4j/slf4j-api/1.8.0-beta4/slf4j-api-1.8.0-beta4.jar",
-                                "libraries/commons-lang/commons-lang/2.6-lolimoe/commons-lang-2.6-lolimoe.jar"
                         ].findAll { it.startsWith('libraries/') && !claimed.contains(it.rsplit('/', 2)[0]) }
                 )
         def MODULE_PATH = Util.getArtifactsOffline(project, project.configurations.moduleonly, false).values().collect { "libraries/${it.downloads.artifact.path}" }

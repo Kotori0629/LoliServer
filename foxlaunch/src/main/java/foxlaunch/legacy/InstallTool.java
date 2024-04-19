@@ -24,16 +24,16 @@ public class InstallTool {
                 Utils.pathToURL("foxlaunch-libs/fastcsv-2.0.0.jar"),
                 Utils.pathToURL("foxlaunch-libs/srgutils-0.4.11.jar"),
                 Utils.pathToURL("libraries/com/google/code/gson/gson/2.8.9/gson-2.8.9.jar"),
-                Utils.pathToURL("libraries/net/md-5/SpecialSource/1.11.0/SpecialSource-1.11.0.jar"),
+                Utils.pathToURL("libraries/net/md-5/SpecialSource/1.11.2/SpecialSource-1.11.2.jar"),
                 Utils.pathToURL("libraries/com/opencsv/opencsv/4.4/opencsv-4.4.jar"),
                 Utils.pathToURL("libraries/net/sf/jopt-simple/jopt-simple/5.0.4/jopt-simple-5.0.4.jar"),
                 //Utils.pathToURL("libraries/net/sf/opencsv/opencsv/4.4/opencsv-4.4.jar"),
                 Utils.pathToURL("libraries/com/google/guava/guava/31.0.1-jre/guava-31.0.1-jre.jar"),
-                Utils.pathToURL("libraries/org/ow2/asm/asm-commons/9.3/asm-commons-9.3.jar"),
-                Utils.pathToURL("libraries/org/ow2/asm/asm-analysis/9.3/asm-analysis-9.3.jar"),
-                Utils.pathToURL("libraries/org/ow2/asm/asm-tree/9.3/asm-tree-9.3.jar"),
-                Utils.pathToURL("libraries/org/ow2/asm/asm/9.3/asm-9.3.jar"),
-                Utils.pathToURL("libraries/org/ow2/asm/asm-util/9.3/asm-util-9.3.jar")
+                Utils.pathToURL("libraries/org/ow2/asm/asm-commons/9.6/asm-commons-9.6.jar"),
+                Utils.pathToURL("libraries/org/ow2/asm/asm-analysis/9.6/asm-analysis-9.6.jar"),
+                Utils.pathToURL("libraries/org/ow2/asm/asm-tree/9.6/asm-tree-9.6.jar"),
+                Utils.pathToURL("libraries/org/ow2/asm/asm/9.6/asm-9.6.jar"),
+                Utils.pathToURL("libraries/org/ow2/asm/asm-util/9.6/asm-util-9.6.jar")
         };
 
         URL[] libJarSplitter = new URL[] {
@@ -46,11 +46,11 @@ public class InstallTool {
                 Utils.pathToURL("foxlaunch-libs/ForgeAutoRenamingTool-0.1.22.jar"),
                 Utils.pathToURL("foxlaunch-libs/srgutils-0.4.11.jar"),
                 Utils.pathToURL("libraries/net/sf/jopt-simple/jopt-simple/5.0.4/jopt-simple-5.0.4.jar"),
-                Utils.pathToURL("libraries/org/ow2/asm/asm-commons/9.3/asm-commons-9.3.jar"),
-                Utils.pathToURL("libraries/org/ow2/asm/asm-analysis/9.3/asm-analysis-9.3.jar"),
-                Utils.pathToURL("libraries/org/ow2/asm/asm-tree/9.3/asm-tree-9.3.jar"),
-                Utils.pathToURL("libraries/org/ow2/asm/asm/9.3/asm-9.3.jar"),
-                Utils.pathToURL("libraries/org/ow2/asm/asm-util/9.3/asm-util-9.3.jar")
+                Utils.pathToURL("libraries/org/ow2/asm/asm-commons/9.6/asm-commons-9.6.jar"),
+                Utils.pathToURL("libraries/org/ow2/asm/asm-analysis/9.6/asm-analysis-9.6.jar"),
+                Utils.pathToURL("libraries/org/ow2/asm/asm-tree/9.6/asm-tree-9.6.jar"),
+                Utils.pathToURL("libraries/org/ow2/asm/asm/9.6/asm-9.6.jar"),
+                Utils.pathToURL("libraries/org/ow2/asm/asm-util/9.6/asm-util-9.6.jar")
         };
 
         URL[] libBinaryPatcher = new URL[] {

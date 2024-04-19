@@ -41,7 +41,7 @@ public class Utils {
             case "minecraft_server.1.19.2.jar":
                 return "B26727069EF5F61C704ADD9A378AC90E3D271FD7876C0BD3DCFBE9FD0BEC4D96";
             case "server-1.19.2-mappings.txt":
-                return "4C9F69251FE5910CBC31E02879468E739663077FC0DB61076FA7D8617372763F";
+                return "E3E93DAC4D886924FF3B81CE5D210925B9E4112776FDEF4D0E6D5FEFB062A879";
             case "mcp_config-1.19.2-20220805.130853.zip": // 重要: Update it when updating MCP version
                 return "FD4CF084B96492DE87499B49D1AE5896EF14A3F85B5462D2842D7B193FBA9135";
             case "authlib-3.11.49.jar":
