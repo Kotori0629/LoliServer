@@ -60,7 +60,7 @@
           }
        });
  
-@@ -79,30 +_,32 @@
+@@ -79,30 +_,33 @@
        this.m_38895_(DataSlot.m_39406_(this.f_39448_, 0));
        this.m_38895_(DataSlot.m_39406_(this.f_39448_, 1));
        this.m_38895_(DataSlot.m_39406_(this.f_39448_, 2));
@@ -72,6 +72,7 @@
           ItemStack itemstack = p_39461_.m_8020_(0);
 -         if (!itemstack.m_41619_() && itemstack.m_41792_()) {
 +         if (!itemstack.m_41619_()/* && itemstack.isEnchantable()*/) { // CraftBukkit - relax condition
++            boolean isEnchantabled = itemstack.m_41792_(); // CatServer - fix mixin conflict with morejs
              this.f_39450_.m_39292_((p_39485_, p_39486_) -> {
 -               int j = 0;
 +               int j = 0; // LoliServer - to int
@@ -109,7 +110,7 @@
 +                  offers[k] = (enchantment != null) ? new EnchantmentOffer(enchantment, this.f_39448_[k], this.f_39446_[k]) : null;
 +               }
 +               PrepareItemEnchantEvent event = new PrepareItemEnchantEvent(player, this.getBukkitView(), f_39450_.getLocation().getBlock(), item, offers, j);
-+               event.setCancelled(!itemstack.m_41792_());
++               event.setCancelled(!isEnchantabled); // CatServer - fix mixin conflict with morejs
 +               p_39485_.getCraftServer().getPluginManager().callEvent(event);
 +               if (event.isCancelled()) {
 +                  for (j = 0; j < 3; ++j) {
