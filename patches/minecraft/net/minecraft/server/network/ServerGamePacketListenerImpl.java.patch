@@ -146,7 +146,7 @@
  import net.minecraft.world.level.block.Blocks;
  import net.minecraft.world.level.block.CommandBlock;
  import net.minecraft.world.level.block.entity.BlockEntity;
-@@ -173,1612 +_,2694 @@
+@@ -173,1612 +_,2727 @@
  import net.minecraft.world.level.block.state.BlockState;
  import net.minecraft.world.phys.AABB;
  import net.minecraft.world.phys.BlockHitResult;
@@ -1211,7 +1211,11 @@
 +    private void m_9812_(List<FilteredText> p_9813_, int p_9814_) {
 +        ItemStack itemstack = this.f_9743_.m_150109_().m_8020_(p_9814_);
 +        if (itemstack.m_150930_(Items.f_42614_)) {
-+            this.updateBookPages(p_9813_, UnaryOperator.identity(), itemstack.m_41777_(), p_9814_, itemstack); // CraftBukkit
++            // CatServer start - fix mixin conflict with supplementaries
++            this.slotId(p_9814_);
++            this.handItem(itemstack);
++            this.m_143634_(p_9813_, UnaryOperator.identity(), itemstack.m_41777_());
++            // CatServer end
 +        }
 +    }
 +
@@ -1232,14 +1236,43 @@
 +                itemstack1.m_41700_("title", StringTag.m_129297_(p_215209_.f_215168_()));
 +            }
 +
-+            this.updateBookPages(p_215210_, (p_238206_) -> {
-+                return Component.Serializer.m_130703_(Component.m_237113_(p_238206_));
-+            }, itemstack1, p_215211_, itemstack); // CraftBukkit
++            // CatServer start - fix mixin conflict with supplementaries
++            this.slotId(p_215211_);
++            this.handItem(itemstack);
++
++            this.m_143634_(p_215210_, (p_238206_) -> Component.Serializer.m_130703_(Component.m_237113_(p_238206_)), itemstack1);
++            // CatServer end
 +            this.f_9743_.m_150109_().m_6836_(p_215211_, itemstack); // CraftBukkit - event factory updates the hand book
 +        }
 +    }
 +
++    // CatServer start - fix mixin conflict with supplementaries
++    private int slotId;
++
++    private @Nullable ItemStack handItem;
++
++    private void slotId(int slot) {
++        this.slotId = slot;
++    }
++
++    private void handItem(ItemStack itemStack) {
++        this.handItem = itemStack;
++    }
++
 +    private void updateBookPages(List<FilteredText> p_143635_, UnaryOperator<String> p_143636_, ItemStack p_143637_, int slot, ItemStack handItem) { // CraftBukkit
++        this.slotId(slot);
++        this.handItem(handItem);
++        this.m_143634_(p_143635_, p_143636_, p_143637_);
++    }
++
++    private void m_143634_(List<FilteredText> p_143635_, UnaryOperator<String> p_143636_, ItemStack p_143637_) {
++        var slot = this.slotId;
++        var handItem = this.handItem;
++
++        this.slotId = 0;
++        this.handItem = null;
++        // CatServer end
++
 +        ListTag listtag = new ListTag();
 +        if (this.f_9743_.m_143387_()) {
 +            p_143635_.stream().map((p_238209_) -> {
