@@ -1,13 +1,5 @@
 --- a/net/minecraft/world/entity/EntityType.java
 +++ b/net/minecraft/world/entity/EntityType.java
-@@ -6,6 +_,7 @@
- import java.util.Optional;
- import java.util.Spliterator;
- import java.util.UUID;
-+import java.util.concurrent.atomic.AtomicReference;
- import java.util.function.Consumer;
- import java.util.function.Function;
- import java.util.stream.Stream;
 @@ -150,6 +_,7 @@
  import net.minecraft.world.phys.AABB;
  import net.minecraft.world.phys.shapes.Shapes;
@@ -41,7 +33,7 @@
     }
  
     public EntityType(EntityType.EntityFactory<T> p_20574_, MobCategory p_20575_, boolean p_20576_, boolean p_20577_, boolean p_20578_, boolean p_20579_, ImmutableSet<Block> p_20580_, EntityDimensions p_20581_, int p_20582_, int p_20583_) {
-+       this(p_20574_, p_20575_, p_20576_, p_20577_, p_20578_, p_20579_, p_20580_, p_20581_, p_20582_, p_20583_, EntityType::defaultVelocitySupplier, EntityType::defaultTrackingRangeSupplier, EntityType::defaultUpdateIntervalSupplier, null);
++      this(p_20574_, p_20575_, p_20576_, p_20577_, p_20578_, p_20579_, p_20580_, p_20581_, p_20582_, p_20583_, EntityType::defaultVelocitySupplier, EntityType::defaultTrackingRangeSupplier, EntityType::defaultUpdateIntervalSupplier, null);
 +   }
 +   public EntityType(EntityType.EntityFactory<T> p_20574_, MobCategory p_20575_, boolean p_20576_, boolean p_20577_, boolean p_20578_, boolean p_20579_, ImmutableSet<Block> p_20580_, EntityDimensions p_20581_, int p_20582_, int p_20583_, final java.util.function.Predicate<EntityType<?>> velocityUpdateSupplier, final java.util.function.ToIntFunction<EntityType<?>> trackingRangeSupplier, final java.util.function.ToIntFunction<EntityType<?>> updateIntervalSupplier, final java.util.function.BiFunction<net.minecraftforge.network.PlayMessages.SpawnEntity, Level, T> customClientFactory) {
        this.f_20535_ = p_20574_;
@@ -58,41 +50,43 @@
     }
  
     @Nullable
-@@ -322,15 +_,27 @@
-       return this.m_20600_(p_20593_, p_20594_ == null ? null : p_20594_.m_41783_(), p_20594_ != null && p_20594_.m_41788_() ? p_20594_.m_41786_() : null, p_20595_, p_20596_, p_20597_, p_20598_, p_20599_);
-    }
+@@ -324,9 +_,15 @@
  
-+   // LoliServer start
-+   private AtomicReference<CreatureSpawnEvent.SpawnReason> atomicSpawnReason = new AtomicReference<>(CreatureSpawnEvent.SpawnReason.DEFAULT);
-+   @Nullable
-+   public T spawn(ServerLevel p_20601_, @Nullable CompoundTag p_20602_, @Nullable Component p_20603_, @Nullable Player p_20604_, BlockPos p_20605_, MobSpawnType p_20606_, boolean p_20607_, boolean p_20608_, org.bukkit.event.entity.CreatureSpawnEvent.SpawnReason spawnReason) {
-+      atomicSpawnReason.set(CreatureSpawnEvent.SpawnReason.SPAWNER_EGG);
-+      return this.m_20600_(p_20601_, p_20602_, p_20603_, p_20604_, p_20605_, p_20606_, p_20607_, p_20608_);
-+   }
-+
     @Nullable
     public T m_20600_(ServerLevel p_20601_, @Nullable CompoundTag p_20602_, @Nullable Component p_20603_, @Nullable Player p_20604_, BlockPos p_20605_, MobSpawnType p_20606_, boolean p_20607_, boolean p_20608_) {
++      return this.spawn(p_20601_, p_20602_, p_20603_, p_20604_, p_20605_, p_20606_, p_20607_, p_20608_, CreatureSpawnEvent.SpawnReason.SPAWNER_EGG); // CatServer
++   }
++
++   @Nullable
++   public T spawn(ServerLevel p_20601_, @Nullable CompoundTag p_20602_, @Nullable Component p_20603_, @Nullable Player p_20604_, BlockPos p_20605_, MobSpawnType p_20606_, boolean p_20607_, boolean p_20608_, org.bukkit.event.entity.CreatureSpawnEvent.SpawnReason spawnReason) {
        T t = this.m_20655_(p_20601_, p_20602_, p_20603_, p_20604_, p_20605_, p_20606_, p_20607_, p_20608_);
        if (t != null) {
 -         p_20601_.m_47205_(t);
-+         if (t instanceof net.minecraft.world.entity.Mob && net.minecraftforge.event.ForgeEventFactory.doSpecialSpawn((net.minecraft.world.entity.Mob) t, p_20601_, p_20605_.m_123341_(), p_20605_.m_123342_(), p_20605_.m_123343_(), null, p_20606_)) return null;
-+         CreatureSpawnEvent.SpawnReason spawnReason = atomicSpawnReason.getAndSet(CreatureSpawnEvent.SpawnReason.DEFAULT);
 +         p_20601_.addFreshEntityWithPassengers(t, spawnReason);
 +         return !t.m_213877_() ? t : null; // Don't return an entity when CreatureSpawnEvent is canceled
        }
  
        return t;
-    }
-+   // LoliServer end
+@@ -351,7 +_,8 @@
+             Mob mob = (Mob)t;
+             mob.f_20885_ = mob.m_146908_();
+             mob.f_20883_ = mob.m_146908_();
+-            mob.m_6518_(p_20656_, p_20656_.m_6436_(mob.m_20183_()), p_20661_, (SpawnGroupData)null, p_20657_);
++            if (!net.minecraftforge.event.ForgeEventFactory.doSpecialSpawn(mob, p_20656_, (float) mob.m_20185_(), (float) mob.m_20186_(), (float) mob.m_20189_(), null, p_20661_))
++               mob.m_6518_(p_20656_, p_20656_.m_6436_(mob.m_20183_()), p_20661_, (SpawnGroupData)null, p_20657_);
+             mob.m_8032_();
+          }
  
-    @Nullable
-    public T m_20655_(ServerLevel p_20656_, @Nullable CompoundTag p_20657_, @Nullable Component p_20658_, @Nullable Player p_20659_, BlockPos p_20660_, MobSpawnType p_20661_, boolean p_20662_, boolean p_20663_) {
-@@ -359,7 +_,7 @@
+@@ -359,7 +_,11 @@
              t.m_6593_(p_20658_);
           }
  
 -         m_20620_(p_20656_, p_20659_, t, p_20657_);
-+         try { m_20620_(p_20656_, p_20659_, t, p_20657_); } catch (Throwable var) { f_20534_.warn("Error loading spawn egg NBT", t); } // CraftBukkit - SPIGOT-5665
++         try {
++            m_20620_(p_20656_, p_20659_, t, p_20657_);
++         } catch (Throwable throwable) {
++            f_20534_.warn("Error loading spawn egg NBT", throwable); // CraftBukkit - SPIGOT-5665
++         }
           return t;
        }
     }
@@ -125,8 +119,8 @@
     }
  
 +   public T customClientSpawn(net.minecraftforge.network.PlayMessages.SpawnEntity packet, Level world) {
-+       if (customClientFactory == null) return this.m_20615_(world);
-+       return customClientFactory.apply(packet, world);
++      if (customClientFactory == null) return this.m_20615_(world);
++      return customClientFactory.apply(packet, world);
 +   }
 +   public Stream<TagKey<EntityType<?>>> getTags() {return this.m_204041_().m_203616_();}
 +
@@ -150,18 +144,18 @@
        }
  
 +      public EntityType.Builder<T> setUpdateInterval(int interval) {
-+          this.updateIntervalSupplier = t->interval;
-+          return this;
++         this.updateIntervalSupplier = t->interval;
++         return this;
 +      }
 +
 +      public EntityType.Builder<T> setTrackingRange(int range) {
-+          this.trackingRangeSupplier = t->range;
-+          return this;
++         this.trackingRangeSupplier = t->range;
++         return this;
 +      }
 +
 +      public EntityType.Builder<T> setShouldReceiveVelocityUpdates(boolean value) {
-+          this.velocityUpdateSupplier = t->value;
-+          return this;
++         this.velocityUpdateSupplier = t->value;
++         return this;
 +      }
 +
 +      /**
@@ -169,8 +163,8 @@
 +       * If you need finer control over the spawning process, use this to get read access to the spawn packet.
 +       */
 +      public EntityType.Builder<T> setCustomClientFactory(java.util.function.BiFunction<net.minecraftforge.network.PlayMessages.SpawnEntity, Level, T> customClientFactory) {
-+          this.customClientFactory = customClientFactory;
-+          return this;
++         this.customClientFactory = customClientFactory;
++         return this;
 +      }
 +
        public EntityType<T> m_20712_(String p_20713_) {

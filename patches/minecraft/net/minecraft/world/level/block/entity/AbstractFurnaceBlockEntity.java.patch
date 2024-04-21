@@ -292,7 +292,7 @@
     private static void m_154998_(ServerLevel p_154999_, Vec3 p_155000_, int p_155001_, float p_155002_) {
        int i = Mth.m_14143_((float)p_155001_ * p_155002_);
        float f = Mth.m_14187_((float)p_155001_ * p_155002_);
-@@ -488,13 +_,100 @@
+@@ -488,13 +_,99 @@
           ++i;
        }
  
@@ -335,13 +335,12 @@
 +
 +   @Override
 +   public <T> net.minecraftforge.common.util.LazyOptional<T> getCapability(net.minecraftforge.common.capabilities.Capability<T> capability, @Nullable Direction facing) {
-+      if (!this.f_58859_ && facing != null && capability == net.minecraftforge.common.capabilities.ForgeCapabilities.ITEM_HANDLER) {
-+         if (facing == Direction.UP)
-+            return handlers[0].cast();
-+         else if (facing == Direction.DOWN)
-+            return handlers[1].cast();
-+         else
-+            return handlers[2].cast();
++      if (capability == net.minecraftforge.common.capabilities.ForgeCapabilities.ITEM_HANDLER && facing != null && !this.f_58859_) {
++         return switch (facing) {
++            case UP -> handlers[0].cast();
++            case DOWN -> handlers[1].cast();
++            default -> handlers[2].cast();
++         };
 +      }
 +      return super.getCapability(capability, facing);
 +   }

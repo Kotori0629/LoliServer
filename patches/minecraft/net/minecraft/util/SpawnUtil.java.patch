@@ -9,11 +9,13 @@
  import net.minecraft.core.BlockPos;
  import net.minecraft.core.Direction;
  import net.minecraft.nbt.CompoundTag;
-@@ -12,58 +_,69 @@
+@@ -12,58 +_,83 @@
  import net.minecraft.world.entity.player.Player;
  import net.minecraft.world.level.block.Block;
  import net.minecraft.world.level.block.state.BlockState;
 +import org.bukkit.event.entity.CreatureSpawnEvent;
++
++import javax.annotation.Nullable;
  
  public class SpawnUtil {
 -   public static <T extends Mob> Optional<T> m_216403_(EntityType<T> p_216404_, MobSpawnType p_216405_, ServerLevel p_216406_, BlockPos p_216407_, int p_216408_, int p_216409_, int p_216410_, SpawnUtil.Strategy p_216411_) {
@@ -69,10 +71,14 @@
 -      boolean m_216427_(ServerLevel p_216428_, BlockPos p_216429_, BlockState p_216430_, BlockPos p_216431_, BlockState p_216432_);
 -   }
 +
-+    static AtomicReference<CreatureSpawnEvent.SpawnReason> lolimoe$spawnReason = new AtomicReference<>(null);
++    // CatServer start
++    private static @Nullable CreatureSpawnEvent.SpawnReason spawnReason;
++    private static void spawnReason(CreatureSpawnEvent.SpawnReason spawnReason) {
++        SpawnUtil.spawnReason = spawnReason;
++    }
 +
 +    public static <T extends Mob> Optional<T> trySpawnMob(EntityType<T> p_216404_, MobSpawnType p_216405_, ServerLevel p_216406_, BlockPos p_216407_, int p_216408_, int p_216409_, int p_216410_, SpawnUtil.Strategy p_216411_, CreatureSpawnEvent.SpawnReason reason) {
-+        lolimoe$spawnReason.set(reason);
++        SpawnUtil.spawnReason(reason);
 +        return m_216403_(p_216404_, p_216405_, p_216406_, p_216407_, p_216408_, p_216409_, p_216410_, p_216411_);
 +    }
 +
@@ -86,10 +92,18 @@
 +            if (p_216406_.m_6857_().m_61937_(blockpos$mutableblockpos) && m_216398_(p_216406_, p_216410_, blockpos$mutableblockpos, p_216411_)) {
 +                T t = p_216404_.m_20655_(p_216406_, (CompoundTag) null, (Component) null, (Player) null, blockpos$mutableblockpos, p_216405_, false, false);
 +                if (t != null) {
-+                    if (t.m_5545_(p_216406_, p_216405_) && t.m_6914_(p_216406_)) {
-+                        CreatureSpawnEvent.SpawnReason reason = lolimoe$spawnReason.get() != null ? lolimoe$spawnReason.get() : CreatureSpawnEvent.SpawnReason.DEFAULT;
++                    int res = net.minecraftforge.common.ForgeHooks.canEntitySpawn(t, p_216406_, t.m_20185_(), t.m_20186_(), t.m_20189_(), null, p_216405_);
++                    if (res == 1 || (res == 0 && t.m_5545_(p_216406_, p_216405_) && t.m_6914_(p_216406_))) {
++                        // CatServer start
++                        CreatureSpawnEvent.SpawnReason reason;
++                        if (SpawnUtil.spawnReason != null) {
++                            reason = SpawnUtil.spawnReason;
++                        } else {
++                            reason = CreatureSpawnEvent.SpawnReason.DEFAULT;
++                        }
++                        SpawnUtil.spawnReason = null; // Reset
++                        // CatServer end
 +                        p_216406_.addFreshEntityWithPassengers(t, reason);
-+                        lolimoe$spawnReason.set(null);
 +                        return Optional.of(t);
 +                    }
 +

@@ -27,6 +27,7 @@ import net.minecraft.world.Container;
 import net.minecraft.world.entity.MobCategory;
 import net.minecraft.world.entity.projectile.Projectile;
 import net.minecraft.world.entity.projectile.ThrownEnderpearl;
+import net.minecraft.world.level.LevelSimulatedReader;
 import net.minecraft.world.level.biome.MobSpawnSettings;
 import net.minecraft.world.level.chunk.LevelChunk;
 import net.minecraft.world.level.levelgen.feature.ConfiguredFeature;
@@ -120,6 +121,7 @@ import net.minecraftforge.event.entity.player.PlayerWakeUpEvent;
 import net.minecraftforge.event.entity.player.SleepingLocationCheckEvent;
 import net.minecraftforge.event.entity.player.SleepingTimeCheckEvent;
 import net.minecraftforge.event.furnace.FurnaceFuelBurnTimeEvent;
+import net.minecraftforge.event.level.AlterGroundEvent;
 import net.minecraftforge.event.level.BlockEvent;
 import net.minecraftforge.event.level.BlockEvent.BlockToolModificationEvent;
 import net.minecraftforge.event.level.BlockEvent.CreateFluidSourceEvent;
@@ -176,7 +178,7 @@ public class ForgeEventFactory {
         MinecraftForge.EVENT_BUS.post(new PlayerDestroyItemEvent(player, stack, hand));
     }
 
-    public static Result canEntitySpawn(Mob entity, LevelAccessor level, double x, double y, double z, BaseSpawner spawner, MobSpawnType spawnReason) {
+    public static Result canEntitySpawn(Mob entity, LevelAccessor level, double x, double y, double z, @Nullable BaseSpawner spawner, MobSpawnType spawnReason) {
         if (entity == null)
             return Result.DEFAULT;
         LivingSpawnEvent.CheckSpawn event = new LivingSpawnEvent.CheckSpawn(entity, level, x, y, z, spawner, spawnReason);
@@ -184,7 +186,7 @@ public class ForgeEventFactory {
         return event.getResult();
     }
 
-    public static boolean doSpecialSpawn(Mob entity, LevelAccessor level, float x, float y, float z, BaseSpawner spawner, MobSpawnType spawnReason) {
+    public static boolean doSpecialSpawn(Mob entity, LevelAccessor level, float x, float y, float z, @Nullable BaseSpawner spawner, MobSpawnType spawnReason) {
         return MinecraftForge.EVENT_BUS.post(new LivingSpawnEvent.SpecialSpawn(entity, level, x, y, z, spawner, spawnReason));
     }
 
@@ -458,7 +460,7 @@ public class ForgeEventFactory {
     @Nullable
     private static CapabilityDispatcher gatherCapabilities(AttachCapabilitiesEvent<?> event, @Nullable ICapabilityProvider parent) {
         MinecraftForge.EVENT_BUS.post(event);
-        return event.getCapabilities().size() > 0 || parent != null ? new CapabilityDispatcher(event.getCapabilities(), event.getListeners(), parent) : null;
+        return !event.getCapabilities().isEmpty() || parent != null ? new CapabilityDispatcher(event.getCapabilities(), event.getListeners(), parent) : null;
     }
 
     public static boolean fireSleepingLocationCheck(LivingEntity player, BlockPos sleepingLocation) {
@@ -551,6 +553,13 @@ public class ForgeEventFactory {
         SaplingGrowTreeEvent event = new SaplingGrowTreeEvent(level, randomSource, pos, holder);
         MinecraftForge.EVENT_BUS.post(event);
         return event;
+    }
+
+    public static BlockState alterGround(LevelSimulatedReader level, RandomSource random, BlockPos pos, BlockState altered)
+    {
+        AlterGroundEvent event = new AlterGroundEvent(level, random, pos, altered);
+        MinecraftForge.EVENT_BUS.post(event);
+        return event.getNewAlteredState();
     }
 
     public static void fireChunkTicketLevelUpdated(ServerLevel level, long chunkPos, int oldTicketLevel, int newTicketLevel, @Nullable ChunkHolder chunkHolder) {
