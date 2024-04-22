@@ -146,7 +146,7 @@
  import net.minecraft.world.level.block.Blocks;
  import net.minecraft.world.level.block.CommandBlock;
  import net.minecraft.world.level.block.entity.BlockEntity;
-@@ -173,1612 +_,2727 @@
+@@ -173,1612 +_,2724 @@
  import net.minecraft.world.level.block.state.BlockState;
  import net.minecraft.world.phys.AABB;
  import net.minecraft.world.phys.BlockHitResult;
@@ -2346,20 +2346,17 @@
 +            float f8 = f3 * f5;
 +            double d3 = f_9743_.f_8941_.m_9290_() == GameType.CREATIVE ? 5.0D : 4.5D;
 +            Vec3 vec3d1 = vec3d.m_82520_((double) f7 * d3, (double) f6 * d3, (double) f8 * d3);
-+            HitResult movingobjectposition = this.f_9743_.f_19853_.m_45547_(new ClipContext(vec3d, vec3d1, ClipContext.Block.OUTLINE, ClipContext.Fluid.NONE, f_9743_));
++            BlockHitResult movingobjectposition = this.f_9743_.f_19853_.m_45547_(new ClipContext(vec3d, vec3d1, ClipContext.Block.OUTLINE, ClipContext.Fluid.NONE, f_9743_));
 +            boolean cancelled;
 +            if (movingobjectposition == null || movingobjectposition.m_6662_() != HitResult.Type.BLOCK) {
 +                org.bukkit.event.player.PlayerInteractEvent event = CraftEventFactory.callPlayerInteractEvent(this.f_9743_, Action.RIGHT_CLICK_AIR, itemstack, interactionhand);
 +                cancelled = event.useItemInHand() == Event.Result.DENY;
++            } else if (this.f_9743_.f_8941_.firedInteract) {
++                this.f_9743_.f_8941_.firedInteract = false;
++                cancelled = this.f_9743_.f_8941_.interactResult;
 +            } else {
-+                BlockHitResult movingobjectpositionblock = (BlockHitResult) movingobjectposition;
-+                if (f_9743_.f_8941_.firedInteract && f_9743_.f_8941_.interactPosition.equals(movingobjectpositionblock.m_82425_()) && f_9743_.f_8941_.interactHand == interactionhand && ItemStack.m_41658_(f_9743_.f_8941_.interactItemStack, itemstack)) {
-+                    cancelled = f_9743_.f_8941_.interactResult;
-+                } else {
-+                    org.bukkit.event.player.PlayerInteractEvent event = CraftEventFactory.callPlayerInteractEvent(f_9743_, Action.RIGHT_CLICK_BLOCK, movingobjectpositionblock.m_82425_(), movingobjectpositionblock.m_82434_(), itemstack, true, interactionhand);
-+                    cancelled = event.useItemInHand() == Event.Result.DENY;
-+                }
-+                f_9743_.f_8941_.firedInteract = false;
++                PlayerInteractEvent event = CraftEventFactory.callPlayerInteractEvent(this.f_9743_, Action.RIGHT_CLICK_BLOCK, movingobjectposition.m_82425_(), movingobjectposition.m_82434_(), itemstack, true, interactionhand);
++                cancelled = (event.useItemInHand() == Event.Result.DENY);
 +            }
 +            if (cancelled) {
 +                this.f_9743_.getBukkitEntity().updateInventory(); // SPIGOT-2524
